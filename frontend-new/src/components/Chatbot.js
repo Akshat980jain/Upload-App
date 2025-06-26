@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './Chatbot.css';
 
-const API_URL = 'https://gallaryhub.onrender.com';
+const API_URL = 'https://gallayhub.onrender.com';
 
 const Chatbot = ({ token, userInfo }) => {
   const [isOpen, setIsOpen] = useState(false);

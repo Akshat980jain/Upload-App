@@ -18,7 +18,7 @@ const VideoUploadPage = ({ token }) => {
     
     try {
       setLoading(true);
-      const response = await fetch('https://gallaryhub.onrender.com/api/videos', {
+      const response = await fetch('https://gallayhub.onrender.com/api/videos', {
         headers: {
           'Authorization': `Bearer ${token}`
         }

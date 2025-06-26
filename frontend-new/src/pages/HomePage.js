@@ -14,7 +14,7 @@ const HomePage = ({ token, onLogin }) => {
   const fetchImageCount = useCallback(async () => {
     if (!token) return;
     try {
-      const response = await fetch('https://gallaryhub.onrender.com/api/images', {
+      const response = await fetch('https://gallayhub.onrender.com/api/images', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -34,7 +34,7 @@ const HomePage = ({ token, onLogin }) => {
   const fetchVideoCount = useCallback(async () => {
     if (!token) return;
     try {
-      const response = await fetch('https://gallaryhub.onrender.com/api/videos', {
+      const response = await fetch('https://gallayhub.onrender.com/api/videos', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -51,7 +51,7 @@ const HomePage = ({ token, onLogin }) => {
   const fetchDocumentCount = useCallback(async () => {
     if (!token) return;
     try {
-      const response = await fetch('https://gallaryhub.onrender.com/api/documents', {
+      const response = await fetch('https://gallayhub.onrender.com/api/documents', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {

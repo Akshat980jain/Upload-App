@@ -19,7 +19,7 @@ const VideoUpload = ({ onVideoUpload, token }) => {
     });
 
     try {
-      const response = await axios.post('https://gallaryhub.onrender.com/api/videos/upload-multiple', formData, {
+      const response = await axios.post('https://gallayhub.onrender.com/api/videos/upload-multiple', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`

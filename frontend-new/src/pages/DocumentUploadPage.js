@@ -35,7 +35,7 @@ const DocumentUploadPage = ({ token }) => {
     }
     try {
       setLoading(true);
-      const response = await fetch('https://gallaryhub.onrender.com/api/documents', {
+      const response = await fetch('https://gallayhub.onrender.com/api/documents', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!response.ok) {

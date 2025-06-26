@@ -18,7 +18,7 @@ const ImageUploadPage = ({ token }) => {
     
     try {
       setLoading(true);
-      const response = await fetch('https://gallaryhub.onrender.com/api/images', {
+      const response = await fetch('https://gallayhub.onrender.com/api/images', {
         headers: {
           'Authorization': `Bearer ${token}`
         }

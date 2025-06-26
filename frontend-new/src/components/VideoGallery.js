@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './ImageGallery.css'; // Reusing styles
 
-const API_URL = 'https://gallaryhub.onrender.com';
+const API_URL = 'https://gallayhub.onrender.com';
 
 const VideoGallery = ({ videos, onVideoDelete, onRefresh, token }) => {
   const [deletingId, setDeletingId] = useState(null);

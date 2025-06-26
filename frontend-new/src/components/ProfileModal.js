@@ -4,7 +4,7 @@ import ReactCrop, { centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import './ProfileModal.css';
 
-const API_URL = 'https://gallaryhub.onrender.com';
+const API_URL = 'https://gallayhub.onrender.com';
 
 // Helper function to create a Blob from a cropped image
 function getCroppedImg(image, crop, fileName) {
@@ -73,7 +73,7 @@ const ProfileModal = ({ token, closeModal, onUserInfoUpdate, userInfo, onProfile
 
   const isMobile = useIsMobile();
   const defaultAvatar = '/default-avatar.png';
-  const profilePictureUrl = userInfo && userInfo.profilePicture ? `${API_URL}/uploads/${userInfo.profilePicture}` : defaultAvatar;
+  const profilePictureUrl = userInfo && userInfo.profilePicture ? `${API_URL}/uploads/${userInfo.profilePicture}?t=${Date.now()}` : defaultAvatar;
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -83,7 +83,7 @@ const ProfileModal = ({ token, closeModal, onUserInfoUpdate, userInfo, onProfile
             Authorization: `Bearer ${token}`,
           },
         };
-        const { data } = await axios.get('https://gallaryhub.onrender.com/api/users/profile', config);
+        const { data } = await axios.get('https://gallayhub.onrender.com/api/users/profile', config);
         setUser(data);
         setName(data.name);
         setEmail(data.email);
@@ -98,9 +98,9 @@ const ProfileModal = ({ token, closeModal, onUserInfoUpdate, userInfo, onProfile
     const fetchTotalStorage = async () => {
       try {
         const [docsRes, imgsRes, vidsRes] = await Promise.all([
-          axios.get('https://gallaryhub.onrender.com/api/documents', { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get('https://gallaryhub.onrender.com/api/images', { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get('https://gallaryhub.onrender.com/api/videos', { headers: { Authorization: `Bearer ${token}` } })
+          axios.get('https://gallayhub.onrender.com/api/documents', { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get('https://gallayhub.onrender.com/api/images', { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get('https://gallayhub.onrender.com/api/videos', { headers: { Authorization: `Bearer ${token}` } })
         ]);
         const docSize = Array.isArray(docsRes.data) ? docsRes.data.reduce((sum, d) => sum + (d.size || 0), 0) : 0;
         const imgSize = Array.isArray(imgsRes.data) ? imgsRes.data.reduce((sum, i) => sum + (i.size || 0), 0) : 0;
@@ -220,7 +220,7 @@ const ProfileModal = ({ token, closeModal, onUserInfoUpdate, userInfo, onProfile
         },
       };
 
-      const { data } = await axios.put('https://gallaryhub.onrender.com/api/users/profile', updatedUser, config);
+      const { data } = await axios.put('https://gallayhub.onrender.com/api/users/profile', updatedUser, config);
       setUser(data);
       setName(data.name);
       setEmail(data.email);

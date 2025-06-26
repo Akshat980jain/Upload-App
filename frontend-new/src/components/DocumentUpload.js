@@ -14,7 +14,7 @@ const DocumentUpload = ({ onDocumentUpload, token }) => {
     const formData = new FormData();
     files.forEach(file => formData.append('documents', file));
     try {
-      const response = await fetch('https://gallaryhub.onrender.com/api/documents/upload-multiple', {
+      const response = await fetch('https://gallayhub.onrender.com/api/documents/upload-multiple', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData

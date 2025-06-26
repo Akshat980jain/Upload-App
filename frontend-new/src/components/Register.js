@@ -15,7 +15,7 @@ const Register = ({ onLogin }) => {
         setSuccess('');
         
         try {
-            const { data } = await axios.post('https://gallaryhub.onrender.com/api/users/register', { name, email, password });
+            const { data } = await axios.post('https://gallayhub.onrender.com/api/users/register', { name, email, password });
             
             setSuccess('Registration successful! Welcome!');
             // Clear form

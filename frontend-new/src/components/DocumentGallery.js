@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './ImageGallery.css';
 
-const API_URL = 'https://gallaryhub.onrender.com';
+const API_URL = 'https://gallayhub.onrender.com';
 
 const getIcon = (type) => {
   switch (type) {
