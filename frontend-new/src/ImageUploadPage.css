@@ -1,0 +1,101 @@
+.doc-type-tabs {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10000rem;
+  margin-bottom: 2rem;
+}
+
+.doc-type-tab-btn {
+  min-width: 120px;
+    justify-content: center;
+  background: #fff;
+  color: #333;
+  border: 2px solid #e0e0e0;
+  padding: 0.85rem 1.7rem;
+  border-radius: 30px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0 0.5rem;
+  letter-spacing: 0.02em;
+  outline: none;
+  position: relative;
+}
+
+.doc-type-tab-btn.pdf {
+  color: #b71c1c;
+}
+.doc-type-tab-btn.ppt {
+  color: #e65100;
+}
+.doc-type-tab-btn.excel {
+  color: #1b5e20;
+}
+
+.doc-type-tab-btn.active.pdf {
+  background: linear-gradient(135deg, #d32f2f, #b71c1c);
+  color: #fff;
+  border: 2px solid #b71c1c;
+  box-shadow: 0 4px 18px rgba(211, 47, 47, 0.18);
+  transform: scale(1.06);
+  z-index: 1;
+}
+.doc-type-tab-btn.active.ppt {
+  background: linear-gradient(135deg, #ff9800, #e65100);
+  color: #fff;
+  border: 2px solid #e65100;
+  box-shadow: 0 4px 18px rgba(255, 152, 0, 0.18);
+  transform: scale(1.06);
+  z-index: 1;
+}
+.doc-type-tab-btn.active.excel {
+  background: linear-gradient(135deg, #43a047, #1b5e20);
+  color: #fff;
+  border: 2px solid #1b5e20;
+  box-shadow: 0 4px 18px rgba(67, 160, 71, 0.18);
+  transform: scale(1.06);
+  z-index: 1;
+}
+
+.doc-type-tab-btn:hover:not(.active) {
+  background: #f5f5f5;
+  filter: brightness(1.08);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.10);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.doc-type-tab-btn:focus {
+  border: 2px solid #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.hidden-file-input {
+  display: none !important;
+}
+
+.download-link {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea, #a777e3);
+  color: #fff !important;
+  font-weight: 700;
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  text-decoration: none;
+  font-size: 1.1rem;
+  transition: background 0.3s, box-shadow 0.3s, transform 0.2s;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.18);
+  margin-bottom: 1rem;
+  margin-top: 0.5rem;
+}
+.download-link:hover {
+  background: linear-gradient(135deg, #5a78e4, #925cd1);
+  color: #fff;
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.22);
+} 
