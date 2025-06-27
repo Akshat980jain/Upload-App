@@ -25,7 +25,8 @@ if (!fs.existsSync(documentsDir)) fs.mkdirSync(documentsDir,{recursive:true});
 // Middleware
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://gallaryhub.onrender.com' // Add your production frontend URL here if different
+  'https://gallaryhub.onrender.com',
+  'https://upload-app-lopz.onrender.com' // Added deployed frontend
 ];
 app.use(cors({
   origin: function(origin, callback) {
