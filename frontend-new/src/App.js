@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Navigate,
+} from 'react-router-dom';
 import './App.css';
 import HomePage from './pages/HomePage';
 import ImageUploadPage from './pages/ImageUploadPage';
@@ -54,165 +58,45 @@ function App() {
 
   const token = userInfo ? userInfo.token : null;
 
+  // Route elements with props
+  const getElement = (Component, props = {}) => <Component {...props} />;
+
+  const router = createBrowserRouter([
+    {
+      path: '/',
+      element: getElement(HomePage, { token, onLogin: handleLogin }),
+    },
+    {
+      path: '/upload',
+      element: token ? getElement(ImageUploadPage, { token }) : <Navigate to="/" replace />,
+    },
+    {
+      path: '/videos',
+      element: token ? getElement(VideoUploadPage, { token }) : <Navigate to="/" replace />,
+    },
+    {
+      path: '/documents',
+      element: token ? getElement(DocumentUploadPage, { token }) : <Navigate to="/" replace />,
+    },
+    // Document type routes
+    ...['pdf','ppt','excel','pptx','xls','xlsx','doc','docx','txt','zip','csv'].map(type => ({
+      path: `/documents/${type}`,
+      element: token ? getElement(DocumentUploadPage, { token }) : <Navigate to="/" replace />,
+    })),
+  ], {
+    future: {
+      v7_startTransition: true,
+      v7_relativeSplatPath: true,
+    }
+  });
+
   return (
-    <Router>
-      <div className="App">
-        {userInfo && <Header userInfo={userInfo} onLogout={handleLogout} onProfileClick={openProfileModal} />}
-        <Routes>
-          <Route 
-            path="/" 
-            element={
-              <HomePage 
-                token={token} 
-                onLogin={handleLogin} 
-              />
-            } 
-          />
-          <Route 
-            path="/upload" 
-            element={
-              token ? (
-                <ImageUploadPage token={token} />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            } 
-          />
-          <Route 
-            path="/videos" 
-            element={
-              token ? (
-                <VideoUploadPage token={token} />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            } 
-          />
-          <Route 
-            path="/documents" 
-            element={
-              token ? (
-                <DocumentUploadPage token={token} />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            } 
-          />
-          <Route 
-            path="/documents/pdf" 
-            element={
-              token ? (
-                <DocumentUploadPage token={token} />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            } 
-          />
-          <Route 
-            path="/documents/ppt" 
-            element={
-              token ? (
-                <DocumentUploadPage token={token} />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            } 
-          />
-          <Route 
-            path="/documents/excel" 
-            element={
-              token ? (
-                <DocumentUploadPage token={token} />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            } 
-          />
-          <Route 
-            path="/documents/pptx" 
-            element={
-              token ? (
-                <DocumentUploadPage token={token} />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            } 
-          />
-          <Route 
-            path="/documents/xls" 
-            element={
-              token ? (
-                <DocumentUploadPage token={token} />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            } 
-          />
-          <Route 
-            path="/documents/xlsx" 
-            element={
-              token ? (
-                <DocumentUploadPage token={token} />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            } 
-          />
-          <Route 
-            path="/documents/doc" 
-            element={
-              token ? (
-                <DocumentUploadPage token={token} />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            } 
-          />
-          <Route 
-            path="/documents/docx" 
-            element={
-              token ? (
-                <DocumentUploadPage token={token} />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            } 
-          />
-          <Route 
-            path="/documents/txt" 
-            element={
-              token ? (
-                <DocumentUploadPage token={token} />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            } 
-          />
-          <Route 
-            path="/documents/zip" 
-            element={
-              token ? (
-                <DocumentUploadPage token={token} />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            } 
-          />
-          <Route 
-            path="/documents/csv" 
-            element={
-              token ? (
-                <DocumentUploadPage token={token} />
-              ) : (
-                <Navigate to="/" replace />
-              )
-            } 
-          />
-        </Routes>
-        {showProfileModal && <ProfileModal token={token} closeModal={closeProfileModal} onUserInfoUpdate={handleUserInfoUpdate} userInfo={userInfo} onProfileClick={openProfileModal} onLogout={handleLogout} />}
-        {userInfo && <Chatbot token={token} userInfo={userInfo} />}
-      </div>
-    </Router>
+    <div className="App">
+      {userInfo && <Header userInfo={userInfo} onLogout={handleLogout} onProfileClick={openProfileModal} />}
+      <RouterProvider router={router} />
+      {showProfileModal && <ProfileModal token={token} closeModal={closeProfileModal} onUserInfoUpdate={handleUserInfoUpdate} userInfo={userInfo} onProfileClick={openProfileModal} onLogout={handleLogout} />}
+      {userInfo && <Chatbot token={token} userInfo={userInfo} />}
+    </div>
   );
 }
 
