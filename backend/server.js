@@ -59,6 +59,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/videos', express.static(path.join(__dirname, 'videos')));
 app.use('/documents', express.static(path.join(__dirname, 'documents')));
 
+// Keep-alive endpoint to prevent Render from sleeping
+app.get('/api/ping', (req, res) => {
+  res.json({ status: 'ok', message: 'pong' });
+});
+
 // MongoDB Connection
 const connectDB = async () => {
   try {
