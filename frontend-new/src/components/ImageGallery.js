@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './ImageGallery.css';
 
-const API_URL = 'https://gallaryhub.onrender.com';
+const API_URL = 'https://gallayhub.onrender.com';
 
 const ImageGallery = ({ images, onImageDelete, onRefresh, token }) => {
   const [deletingId, setDeletingId] = useState(null);

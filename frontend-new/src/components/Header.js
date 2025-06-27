@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './Header.css';
-const API_URL = 'https://gallaryhub.onrender.com';
+const API_URL = 'https://gallayhub.onrender.com';
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);

@@ -10,7 +10,7 @@ const Login = ({ onLogin }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const { data } = await axios.post('https://gallaryhub.onrender.com/api/users/login', { email, password });
+            const { data } = await axios.post('https://gallayhub.onrender.com/api/users/login', { email, password });
             onLogin(data);
         } catch (err) {
             console.error(err);

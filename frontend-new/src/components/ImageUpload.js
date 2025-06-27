@@ -88,7 +88,7 @@ const ImageUpload = ({ onImageUpload, token }) => {
       });
 
       try {
-        const response = await fetch('https://gallaryhub.onrender.com/api/images/upload-multiple', {
+        const response = await fetch('https://gallayhub.onrender.com/api/images/upload-multiple', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -139,7 +139,7 @@ const ImageUpload = ({ onImageUpload, token }) => {
       formData.append('image', file);
 
       try {
-        const response = await fetch('https://gallaryhub.onrender.com/api/images/upload', {
+        const response = await fetch('https://gallayhub.onrender.com/api/images/upload', {
           method: 'POST',
           headers: {
               'Authorization': `Bearer ${token}`
