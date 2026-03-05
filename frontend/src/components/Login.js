@@ -35,7 +35,7 @@ const Login = ({ onLogin }) => {
         <div className="auth-card animate-slide-up">
             <div className="auth-header">
                 <div className="auth-logo">
-                    <div className="auth-logo-icon">G</div>
+                    <img src="/favicon.png" alt="GalleryHub Logo" className="auth-logo-icon" style={{ borderRadius: '12px', objectFit: 'cover', width: '100%', height: '100%' }} />
                 </div>
                 <h2>Welcome back</h2>
                 <p>Sign in to your GalleryHub account</p>

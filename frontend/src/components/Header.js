@@ -5,17 +5,7 @@ import './Header.css';
 const API_URL = process.env.REACT_APP_API_URL || 'https://gallayhub.onrender.com';
 
 const Logo = () => (
-  <svg width="32" height="32" viewBox="0 0 32 32" className="logo-svg">
-    <defs>
-      <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#4285f4" />
-        <stop offset="50%" stopColor="#a855f7" />
-        <stop offset="100%" stopColor="#ec4899" />
-      </linearGradient>
-    </defs>
-    <rect width="32" height="32" rx="8" fill="url(#logoGrad)" />
-    <text x="16" y="22" textAnchor="middle" fill="white" fontSize="18" fontWeight="700" fontFamily="Inter, sans-serif">G</text>
-  </svg>
+  <img src="/favicon.png" alt="GalleryHub Logo" className="logo-svg" style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'cover' }} />
 );
 
 const Header = ({ userInfo, onLogout, darkMode, setDarkMode, searchQuery, onSearchChange, profilePicture, onProfileClick, onSettingsClick }) => {

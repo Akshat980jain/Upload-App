@@ -25,17 +25,7 @@ const HomePage = ({ token, onLogin, userInfo, onLogout, darkMode, setDarkMode })
         {/* Left - Branding */}
         <div className="home-branding animate-fade-in">
           <div className="brand-logo">
-            <svg width="44" height="44" viewBox="0 0 32 32" className="brand-logo-svg">
-              <defs>
-                <linearGradient id="homeLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#4285f4" />
-                  <stop offset="50%" stopColor="#a855f7" />
-                  <stop offset="100%" stopColor="#ec4899" />
-                </linearGradient>
-              </defs>
-              <rect width="32" height="32" rx="8" fill="url(#homeLogoGrad)" />
-              <text x="16" y="22" textAnchor="middle" fill="white" fontSize="18" fontWeight="700" fontFamily="Inter, sans-serif">G</text>
-            </svg>
+            <img src="/favicon.png" alt="GalleryHub Logo" className="brand-logo-svg" style={{ width: '44px', height: '44px', borderRadius: '12px', objectFit: 'cover' }} />
             <span className="brand-logo-text">GalleryHub</span>
           </div>
           <h1>Your images,<br /><span className="gradient-text">beautifully organized.</span></h1>

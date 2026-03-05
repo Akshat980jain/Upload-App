@@ -45,7 +45,7 @@ const Register = ({ onLogin }) => {
         <div className="auth-card animate-slide-up">
             <div className="auth-header">
                 <div className="auth-logo">
-                    <div className="auth-logo-icon" style={{ background: 'linear-gradient(135deg, #a855f7, #4285f4)' }}>G</div>
+                    <img src="/favicon.png" alt="GalleryHub Logo" className="auth-logo-icon" style={{ borderRadius: '12px', objectFit: 'cover', width: '100%', height: '100%' }} />
                 </div>
                 <h2>Create account</h2>
                 <p>Get started with GalleryHub</p>
