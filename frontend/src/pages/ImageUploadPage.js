@@ -470,28 +470,36 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
             {/* ─── Stat Cards ─── */}
             <div className="stat-cards">
               <div className="stat-card">
-                <div className="stat-icon" style={{ background: 'rgba(66,133,244,0.12)' }}>📁</div>
+                <div className="stat-icon" style={{ background: 'rgba(66,133,244,0.12)' }}>
+                  <img src="/icon-total-files.png" alt="" className="stat-icon-img" />
+                </div>
                 <div>
                   <div className="stat-value">{allMedia.length}</div>
                   <div className="stat-label">Total Files</div>
                 </div>
               </div>
               <div className="stat-card">
-                <div className="stat-icon" style={{ background: 'rgba(52,168,83,0.12)' }}>💾</div>
+                <div className="stat-icon" style={{ background: 'rgba(52,168,83,0.12)' }}>
+                  <img src="/icon-storage.png" alt="" className="stat-icon-img" />
+                </div>
                 <div>
                   <div className="stat-value">{formatStorage(totalSize)}</div>
                   <div className="stat-label">Storage Used</div>
                 </div>
               </div>
               <div className="stat-card">
-                <div className="stat-icon" style={{ background: 'rgba(66,133,244,0.12)' }}>📷</div>
+                <div className="stat-icon" style={{ background: 'rgba(66,133,244,0.12)' }}>
+                  <img src="/icon-images.png" alt="" className="stat-icon-img" />
+                </div>
                 <div>
                   <div className="stat-value">{images.length}</div>
                   <div className="stat-label">Images</div>
                 </div>
               </div>
               <div className="stat-card">
-                <div className="stat-icon" style={{ background: 'rgba(234,67,53,0.12)' }}>🎥</div>
+                <div className="stat-icon" style={{ background: 'rgba(234,67,53,0.12)' }}>
+                  <img src="/icon-videos.png" alt="" className="stat-icon-img" />
+                </div>
                 <div>
                   <div className="stat-value">{videos.length}</div>
                   <div className="stat-label">Videos</div>
@@ -547,15 +555,15 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
             {allMedia.length < 5 && (
               <div className="quick-actions">
                 <button className="quick-action-card" onClick={() => openUpload('images')}>
-                  <span className="quick-action-icon">📷</span>
+                  <img src="/icon-images.png" alt="" className="quick-action-icon-img" />
                   <span className="quick-action-label">Upload Images</span>
                 </button>
                 <button className="quick-action-card" onClick={() => openUpload('videos')}>
-                  <span className="quick-action-icon">🎥</span>
+                  <img src="/icon-videos.png" alt="" className="quick-action-icon-img" />
                   <span className="quick-action-label">Upload Videos</span>
                 </button>
                 <button className="quick-action-card" onClick={() => openUpload('documents')}>
-                  <span className="quick-action-icon">📄</span>
+                  <img src="/icon-documents.png" alt="" className="quick-action-icon-img" />
                   <span className="quick-action-label">Upload Documents</span>
                 </button>
               </div>
@@ -572,15 +580,15 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
                   <p className="empty-state-subtitle">Start uploading images, videos, and documents to see them here</p>
                   <div className="quick-actions" style={{ width: '100%', maxWidth: 600 }}>
                     <button className="quick-action-card" onClick={() => openUpload('images')}>
-                      <span className="quick-action-icon">📷</span>
+                      <img src="/icon-images.png" alt="" className="quick-action-icon-img" />
                       <span className="quick-action-label">Upload Images</span>
                     </button>
                     <button className="quick-action-card" onClick={() => openUpload('videos')}>
-                      <span className="quick-action-icon">🎥</span>
+                      <img src="/icon-videos.png" alt="" className="quick-action-icon-img" />
                       <span className="quick-action-label">Upload Videos</span>
                     </button>
                     <button className="quick-action-card" onClick={() => openUpload('documents')}>
-                      <span className="quick-action-icon">📄</span>
+                      <img src="/icon-documents.png" alt="" className="quick-action-icon-img" />
                       <span className="quick-action-label">Upload Documents</span>
                     </button>
                   </div>
