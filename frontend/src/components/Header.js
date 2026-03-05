@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, Moon, Sun, LogOut, ChevronDown, User, Settings } from 'lucide-react';
+import { Search, Moon, Sun, Monitor, LogOut, ChevronDown, User, Settings } from 'lucide-react';
 import './Header.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'https://gallayhub.onrender.com';
@@ -8,7 +8,7 @@ const Logo = () => (
   <img src="/favicon.png" alt="GalleryHub Logo" className="logo-svg" style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'cover' }} />
 );
 
-const Header = ({ userInfo, onLogout, darkMode, setDarkMode, searchQuery, onSearchChange, profilePicture, onProfileClick, onSettingsClick }) => {
+const Header = ({ userInfo, onLogout, darkMode, themeMode, setThemeMode, searchQuery, onSearchChange, profilePicture, onProfileClick, onSettingsClick }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -23,6 +23,15 @@ const Header = ({ userInfo, onLogout, darkMode, setDarkMode, searchQuery, onSear
   }, []);
 
   const profilePicUrl = profilePicture ? `${API_URL}/uploads/${profilePicture}` : null;
+
+  // Cycle through: system → light → dark → system
+  const cycleTheme = () => {
+    const next = themeMode === 'system' ? 'light' : themeMode === 'light' ? 'dark' : 'system';
+    setThemeMode(next);
+  };
+
+  const themeIcon = themeMode === 'system' ? <Monitor size={20} /> : themeMode === 'dark' ? <Sun size={20} /> : <Moon size={20} />;
+  const themeLabel = themeMode === 'system' ? 'System theme' : themeMode === 'dark' ? 'Dark mode' : 'Light mode';
 
   return (
     <nav className="navbar">
@@ -46,13 +55,13 @@ const Header = ({ userInfo, onLogout, darkMode, setDarkMode, searchQuery, onSear
 
       {/* Right Actions */}
       <div className="navbar-actions">
-        {/* Dark Mode Toggle */}
+        {/* Theme Toggle */}
         <button
           className="nav-icon-btn"
-          onClick={() => setDarkMode(!darkMode)}
-          title={darkMode ? 'Light mode' : 'Dark mode'}
+          onClick={cycleTheme}
+          title={themeLabel}
         >
-          {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+          {themeIcon}
         </button>
 
         {/* User Avatar */}

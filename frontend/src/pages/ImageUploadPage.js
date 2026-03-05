@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Image, FolderOpen, Layers, Sun, Moon, LogOut, RefreshCw, Grid, List,
+  Image, FolderOpen, Layers, Sun, Moon, Monitor, LogOut, RefreshCw, Grid, List,
   User, Camera, Lock, Mail, Edit3, Check, X, HardDrive, Trash2, Bell, Palette, Shield, ChevronRight,
   FolderPlus, Plus, ArrowLeft, MoreVertical
 } from 'lucide-react';
@@ -26,7 +26,7 @@ const CATEGORY_GROUPS = [
   { name: 'Archives', icon: '📦', extensions: ['zip', 'rar', '7z', 'tar', 'gz'], color: '#ec4899' },
 ];
 
-const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, setDarkMode }) => {
+const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setThemeMode }) => {
   const [images, setImages] = useState([]);
   const [videos, setVideos] = useState([]);
   const [documents, setDocuments] = useState([]);
@@ -933,15 +933,23 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, setDarkMode }) =
               <p className="settings-section-title">Appearance</p>
               <div className="settings-item">
                 <div className="settings-item-info">
-                  {darkMode ? <Moon size={20} /> : <Sun size={20} />}
+                  {themeMode === 'system' ? <Monitor size={20} /> : themeMode === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
                   <div>
-                    <p className="settings-label">Dark Mode</p>
-                    <p className="settings-desc">Switch between light and dark theme</p>
+                    <p className="settings-label">Theme</p>
+                    <p className="settings-desc">Choose system, light, or dark theme</p>
                   </div>
                 </div>
-                <button className={`toggle-switch ${darkMode ? 'active' : ''}`} onClick={() => { setDarkMode(!darkMode); toast.success(darkMode ? 'Light mode' : 'Dark mode'); }}>
-                  <div className="toggle-knob" />
-                </button>
+                <div className="theme-selector">
+                  <button className={`theme-btn ${themeMode === 'system' ? 'active' : ''}`} onClick={() => { setThemeMode('system'); toast.success('System theme'); }} title="System">
+                    <Monitor size={16} />
+                  </button>
+                  <button className={`theme-btn ${themeMode === 'light' ? 'active' : ''}`} onClick={() => { setThemeMode('light'); toast.success('Light mode'); }} title="Light">
+                    <Sun size={16} />
+                  </button>
+                  <button className={`theme-btn ${themeMode === 'dark' ? 'active' : ''}`} onClick={() => { setThemeMode('dark'); toast.success('Dark mode'); }} title="Dark">
+                    <Moon size={16} />
+                  </button>
+                </div>
               </div>
               <div className="settings-item">
                 <div className="settings-item-info">
@@ -1066,7 +1074,7 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, setDarkMode }) =
 
   return (
     <div className="dashboard">
-      <Header userInfo={userInfo} onLogout={() => { onLogout(); navigate('/'); }} darkMode={darkMode} setDarkMode={setDarkMode} searchQuery={searchQuery} onSearchChange={setSearchQuery} profilePicture={profilePic} onProfileClick={() => { setActiveTab('settings'); setSettingsSection('profile'); }} onSettingsClick={() => { setActiveTab('settings'); setSettingsSection('main'); }} />
+      <Header userInfo={userInfo} onLogout={() => { onLogout(); navigate('/'); }} darkMode={darkMode} themeMode={themeMode} setThemeMode={setThemeMode} searchQuery={searchQuery} onSearchChange={setSearchQuery} profilePicture={profilePic} onProfileClick={() => { setActiveTab('settings'); setSettingsSection('profile'); }} onSettingsClick={() => { setActiveTab('settings'); setSettingsSection('main'); }} />
       <main className="dashboard-main">{renderContent()}</main>
       <BottomDock activeTab={activeTab} onTabChange={handleTabChange} onUploadClick={() => openUpload('all')} />
       <UploadModal
