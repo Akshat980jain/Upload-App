@@ -61,7 +61,7 @@ router.post('/upload-multiple', protect, upload.array('images', 1000), async (re
       const newImage = new Image({
         filename: file.filename,
         originalName: file.originalname,
-        path: file.path,
+        path: file.path.replace(/\\/g, '/'),
         size: file.size,
         user: req.user.id,
       });
@@ -91,7 +91,7 @@ router.post('/upload', protect, upload.single('image'), async (req, res) => {
     const newImage = new Image({
       filename: req.file.filename,
       originalName: req.file.originalname,
-      path: req.file.path,
+      path: req.file.path.replace(/\\/g, '/'),
       size: req.file.size,
       user: req.user.id, // Associate image with the logged-in user
     });

@@ -1,0 +1,23 @@
+.skeleton-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.skeleton-image {
+    aspect-ratio: 4/3;
+    width: 100%;
+}
+
+.skeleton-info {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skeleton-line {
+    height: 12px;
+    border-radius: 6px;
+}

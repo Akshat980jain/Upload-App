@@ -1,0 +1,123 @@
+/* ─── Bottom Dock ─────────────────────────────── */
+.dock-container {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 40;
+    pointer-events: none;
+}
+
+.bottom-dock {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    pointer-events: all;
+}
+
+.dark .bottom-dock {
+    background: rgba(26, 26, 46, 0.9);
+}
+
+/* Regular tab */
+.dock-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    color: var(--text-tertiary);
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.dock-tab:hover {
+    color: var(--text-secondary);
+    background: var(--surface-hover);
+}
+
+.dock-tab.active {
+    color: var(--primary);
+}
+
+.dock-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    width: 4px;
+    height: 4px;
+    background: var(--primary);
+    border-radius: var(--radius-full);
+}
+
+/* Upload button */
+.dock-upload-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 0;
+    margin: 0 8px;
+}
+
+.dock-upload-btn>svg {
+    width: 48px;
+    height: 48px;
+    padding: 12px;
+    background: linear-gradient(135deg, var(--primary), #1a73e8);
+    color: white;
+    border-radius: var(--radius-full);
+    box-shadow: 0 4px 12px rgba(66, 133, 244, 0.4);
+    transition: all 0.2s ease;
+}
+
+.dock-upload-btn:hover>svg {
+    transform: scale(1.08);
+    box-shadow: 0 6px 16px rgba(66, 133, 244, 0.5);
+}
+
+.dock-label {
+    font-size: 10px;
+    font-weight: 500;
+    margin-top: 2px;
+    color: inherit;
+}
+
+.dock-upload-btn .dock-label {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .dock-container {
+        bottom: 8px;
+    }
+
+    .bottom-dock {
+        padding: 6px 10px;
+        gap: 2px;
+    }
+
+    .dock-tab {
+        padding: 6px 10px;
+    }
+
+    .dock-label {
+        font-size: 9px;
+    }
+
+    .dock-upload-btn>svg {
+        width: 42px;
+        height: 42px;
+        padding: 10px;
+    }
+}

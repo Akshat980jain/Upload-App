@@ -19,7 +19,7 @@ const storage = multer.diskStorage({
 });
 
 // Accept all file types for documents
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
 });
@@ -36,7 +36,7 @@ router.post('/upload-multiple', protect, upload.array('documents', 10), async (r
     const docs = req.files.map(file => ({
       originalName: file.originalname,
       filename: file.filename,
-      path: file.path,
+      path: file.path.replace(/\\/g, '/'),
       size: file.size,
       type: path.extname(file.originalname).substring(1),
       user: req.user.id

@@ -29,7 +29,7 @@ const videoFilter = (req, file, cb) => {
   cb(new Error('Only video files are allowed!'));
 };
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   fileFilter: videoFilter,
   limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
@@ -47,7 +47,7 @@ router.post('/upload-multiple', protect, upload.array('videos', 10), async (req,
     const videos = req.files.map(file => ({
       originalName: file.originalname,
       filename: file.filename,
-      path: file.path,
+      path: file.path.replace(/\\/g, '/'),
       size: file.size,
       user: req.user.id
     }));
@@ -85,7 +85,7 @@ router.delete('/:id', protect, async (req, res) => {
     if (video.user.toString() !== req.user.id) {
       return res.status(401).json({ message: 'Not authorized' });
     }
-    
+
     // Optional: remove file from server storage
     // const fs = require('fs');
     // fs.unlink(video.path, (err) => {

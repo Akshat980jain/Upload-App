@@ -7,6 +7,7 @@ const documentSchema = new mongoose.Schema({
   size: { type: Number, required: true },
   type: { type: String, required: true }, // ppt, pdf, xls, etc.
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  folder: { type: mongoose.Schema.Types.ObjectId, ref: 'Folder', default: null },
   uploadDate: { type: Date, default: Date.now }
 });
 
