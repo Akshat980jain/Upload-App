@@ -1,8 +1,8 @@
 import React, { useEffect, useCallback, useState } from 'react';
-import { X, Download, Trash2, ChevronLeft, ChevronRight, ExternalLink, FileText, Loader, FolderOpen } from 'lucide-react';
+import { X, Download, Trash2, ChevronLeft, ChevronRight, ExternalLink, FileText, Loader, FolderOpen, ArrowLeft } from 'lucide-react';
 import './ImagePreviewModal.css';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://gallayhub.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL ?? 'https://gallayhub.onrender.com';
 
 const getMediaUrl = (item) => {
     if (item.mediaType === 'video') return `${API_URL}/videos/${item.filename}`;
@@ -217,6 +217,11 @@ const ImagePreviewModal = ({ image, images, onClose, onDelete, onNavigate, folde
     return (
         <div className="preview-overlay" onClick={onClose}>
             <div className="preview-modal" onClick={(e) => e.stopPropagation()}>
+                {/* Back button (top-left, always visible) */}
+                <button className="preview-back" onClick={onClose}>
+                    <ArrowLeft size={20} />
+                    <span className="preview-back-label">Back</span>
+                </button>
                 {/* Close */}
                 <button className="preview-close" onClick={onClose}><X size={20} /></button>
 

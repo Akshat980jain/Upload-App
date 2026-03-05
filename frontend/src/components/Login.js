@@ -4,7 +4,7 @@ import { Eye, EyeOff, LogIn } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './Login.css';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://gallayhub.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL ?? 'https://gallayhub.onrender.com';
 
 const Login = ({ onLogin }) => {
     const [email, setEmail] = useState('');

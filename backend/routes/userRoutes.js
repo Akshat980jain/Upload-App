@@ -34,8 +34,10 @@ router.post('/register', async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Check if user already exists
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ email: normalizedEmail });
 
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
@@ -44,7 +46,7 @@ router.post('/register', async (req, res) => {
     // Create a new user
     const user = await User.create({
       name,
-      email,
+      email: normalizedEmail,
       password, // Password will be hashed by the pre-save hook in the model
     });
 
@@ -71,9 +73,8 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // Check for user by email
-    // Explicitly select password since it's excluded by default
-    const user = await User.findOne({ email }).select('+password');
+    // Check for user by email (case-insensitive)
+    const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
 
     if (user && (await user.matchPassword(password))) {
       res.json({

@@ -14,7 +14,7 @@ import SkeletonGrid from '../components/SkeletonCard';
 import toast from 'react-hot-toast';
 import './ImageUploadPage.css';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://gallayhub.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL ?? 'https://gallayhub.onrender.com';
 
 // ─── Smart Category Definitions ─────────────────
 const CATEGORY_GROUPS = [

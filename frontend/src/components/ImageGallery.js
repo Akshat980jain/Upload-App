@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Eye, Download, Trash2, FileImage, Play, FileText } from 'lucide-react';
+import { Eye, Download, Trash2, FileImage } from 'lucide-react';
 import './ImageGallery.css';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://gallayhub.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL ?? 'https://gallayhub.onrender.com';
 
 const getMediaUrl = (item) => {
   if (item.mediaType === 'video') return `${API_URL}/videos/${item.filename}`;

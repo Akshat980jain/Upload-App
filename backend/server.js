@@ -33,6 +33,10 @@ app.use(cors({
   origin: function (origin, callback) {
     // allow requests with no origin (like mobile apps, curl, etc.)
     if (!origin) return callback(null, true);
+    // In development, allow all origins (for LAN access from other devices)
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
     if (allowedOrigins.indexOf(origin) !== -1) {
       return callback(null, true);
     } else {

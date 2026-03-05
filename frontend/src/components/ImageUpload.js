@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { Upload, X, FileText, Film } from 'lucide-react';
+import { Upload, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './ImageUpload.css';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://gallayhub.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL ?? 'https://gallayhub.onrender.com';
 
 const classifyFile = (file) => {
   if (file.type.startsWith('image/')) return 'image';
