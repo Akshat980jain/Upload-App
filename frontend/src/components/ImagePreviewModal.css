@@ -129,8 +129,25 @@
 
 .preview-details {
     display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.preview-meta-row {
+    display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.preview-meta-tag {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.08);
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
 }
 
 .preview-details h3 {

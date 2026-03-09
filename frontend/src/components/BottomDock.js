@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, FolderOpen, Plus, Layers, Settings } from 'lucide-react';
+import { Home, FolderOpen, Plus, Settings, Trash2 } from 'lucide-react';
 import './BottomDock.css';
 
 const BottomDock = ({ activeTab, onTabChange, onUploadClick }) => {
@@ -7,7 +7,7 @@ const BottomDock = ({ activeTab, onTabChange, onUploadClick }) => {
         { id: 'home', icon: Home, label: 'Home' },
         { id: 'folders', icon: FolderOpen, label: 'Folders' },
         { id: 'upload', icon: Plus, label: 'Upload', isUpload: true },
-        { id: 'tags', icon: Layers, label: 'Categories' },
+        { id: 'trash', icon: Trash2, label: 'Trash' },
         { id: 'settings', icon: Settings, label: 'Settings' },
     ];
 

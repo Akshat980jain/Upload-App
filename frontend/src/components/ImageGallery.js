@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Eye, Download, Trash2, FileImage } from 'lucide-react';
+import { Eye, Download, Trash2, FileImage, Check, Share2 } from 'lucide-react';
+import ShareModal from './ShareModal';
+import ConfirmModal from './ConfirmModal';
 import './ImageGallery.css';
 
-const API_URL = process.env.REACT_APP_API_URL ?? 'https://gallayhub.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL ?? 'https://galleryhub.onrender.com';
 
 const getMediaUrl = (item) => {
   if (item.mediaType === 'video') return `${API_URL}/videos/${item.filename}`;
@@ -35,14 +37,24 @@ const getPlaceholderColor = (item) => {
   return 'linear-gradient(135deg, #5f6368 0%, #9aa0a6 100%)';
 };
 
-const ImageGallery = ({ images, onImageDelete, onRefresh, token, onPreview, viewMode = 'grid' }) => {
+const ImageGallery = ({ images, onImageDelete, onRefresh, token, onPreview, viewMode = 'grid', confirmDelete = true, isSelecting = false, selectedFiles = new Set(), onToggleSelect }) => {
   const [deletingId, setDeletingId] = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
+  const [shareFile, setShareFile] = useState(null);
+  const [confirmDeleteFile, setConfirmDeleteFile] = useState(null);
 
   const handleDelete = async (item) => {
-    if (!window.confirm('Delete this file?')) return;
+    if (confirmDelete) {
+      setConfirmDeleteFile(item);
+      return;
+    }
+    await executeDelete(item);
+  };
+
+  const executeDelete = async (item) => {
     const imageId = item._id;
     setDeletingId(imageId);
+    setConfirmDeleteFile(null);
     try {
       let endpoint = `${API_URL}/api/images/${imageId}`;
       if (item.mediaType === 'video') endpoint = `${API_URL}/api/videos/${imageId}`;
@@ -104,8 +116,16 @@ const ImageGallery = ({ images, onImageDelete, onRefresh, token, onPreview, view
           return (
             <div
               key={image._id}
-              className="list-row"
-              onClick={() => onPreview(image)}
+              className={`list-row ${selectedFiles.has(image._id) ? 'selected' : ''}`}
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData('application/json', JSON.stringify({ id: image._id, mediaType: image.mediaType || 'image' }));
+                e.dataTransfer.effectAllowed = 'move';
+              }}
+              onClick={(e) => {
+                if (e.ctrlKey || e.metaKey || isSelecting) { onToggleSelect && onToggleSelect(image._id); }
+                else onPreview(image);
+              }}
             >
               <div className="list-col-name">
                 <div className="list-thumb-wrapper">
@@ -130,10 +150,56 @@ const ImageGallery = ({ images, onImageDelete, onRefresh, token, onPreview, view
                 <a href={mediaUrl} download={image.originalName} target="_blank" rel="noopener noreferrer" className="list-action-btn" title="Download">
                   <Download size={16} />
                 </a>
+                <button className="list-action-btn" title="Share" onClick={() => setShareFile(image)}>
+                  <Share2 size={16} />
+                </button>
                 <button className="list-action-btn danger" title="Delete" onClick={() => handleDelete(image)} disabled={deletingId === image._id}>
                   <Trash2 size={16} />
                 </button>
               </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // ─── Masonry View ───
+  if (viewMode === 'masonry') {
+    return (
+      <div className="masonry-grid">
+        {images.map((image) => {
+          const mediaUrl = getMediaUrl(image);
+          const icon = getMediaIcon(image);
+          return (
+            <div
+              key={image._id}
+              className={`masonry-item ${selectedFiles.has(image._id) ? 'selected' : ''}`}
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData('application/json', JSON.stringify({ id: image._id, mediaType: image.mediaType || 'image' }));
+                e.dataTransfer.effectAllowed = 'move';
+              }}
+              onClick={(e) => {
+                if (e.ctrlKey || e.metaKey || isSelecting) { onToggleSelect && onToggleSelect(image._id); }
+                else onPreview(image);
+              }}
+            >
+              {(isSelecting || selectedFiles.size > 0) && (
+                <div className={`file-checkbox ${selectedFiles.has(image._id) ? 'checked' : ''}`}
+                  onClick={(e) => { e.stopPropagation(); onToggleSelect && onToggleSelect(image._id); }}>
+                  {selectedFiles.has(image._id) && <Check size={14} />}
+                </div>
+              )}
+              {icon ? (
+                <div className="media-placeholder" style={{ background: getPlaceholderColor(image), minHeight: '120px' }}>
+                  <span style={{ fontSize: '40px' }}>{icon}</span>
+                </div>
+              ) : (
+                <img src={mediaUrl} alt={image.originalName} loading="lazy"
+                  onError={(e) => { e.target.onerror = null; e.target.style.minHeight = '120px'; e.target.style.background = '#1e1e2e'; }}
+                />
+              )}
             </div>
           );
         })}
@@ -150,12 +216,38 @@ const ImageGallery = ({ images, onImageDelete, onRefresh, token, onPreview, view
         return (
           <div
             key={image._id}
-            className="image-card animate-slide-up"
+            className={`image-card animate-slide-up ${selectedFiles.has(image._id) ? 'selected' : ''}`}
+            draggable
+            onDragStart={(e) => {
+              e.dataTransfer.setData('application/json', JSON.stringify({ id: image._id, mediaType: image.mediaType || 'image' }));
+              e.dataTransfer.effectAllowed = 'move';
+            }}
             onMouseEnter={() => setHoveredId(image._id)}
             onMouseLeave={() => setHoveredId(null)}
           >
-            <div className="card-image-wrapper" onClick={() => onPreview(image)}>
-              {icon ? (
+            <div className="card-image-wrapper" onClick={(e) => {
+              if (e.ctrlKey || e.metaKey || isSelecting) { onToggleSelect && onToggleSelect(image._id); }
+              else onPreview(image);
+            }}>
+
+              {/* Selection checkbox */}
+              {(isSelecting || selectedFiles.size > 0 || hoveredId === image._id) && (
+                <div
+                  className={`file-checkbox ${selectedFiles.has(image._id) ? 'checked' : ''}`}
+                  onClick={(e) => { e.stopPropagation(); onToggleSelect && onToggleSelect(image._id); }}
+                >
+                  {selectedFiles.has(image._id) && <Check size={14} />}
+                </div>
+              )}
+              {image.mediaType === 'video' && image.thumbnail ? (
+                <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                  <img src={`${API_URL}/uploads/${image.thumbnail}`} alt="" className="card-image" loading="lazy" />
+                  <div className="video-duration-badge">
+                    {Math.floor((image.duration || 0) / 60)}:{Math.floor((image.duration || 0) % 60).toString().padStart(2, '0')}
+                  </div>
+                  <div className="video-play-overlay">▶</div>
+                </div>
+              ) : icon ? (
                 <div className="media-placeholder" style={{ background: getPlaceholderColor(image) }}>
                   <span style={{ fontSize: '40px' }}>{icon}</span>
                 </div>
@@ -181,6 +273,9 @@ const ImageGallery = ({ images, onImageDelete, onRefresh, token, onPreview, view
                     <a href={mediaUrl} download={image.originalName} target="_blank" rel="noopener noreferrer" className="overlay-btn" title="Download" onClick={(e) => e.stopPropagation()}>
                       <Download size={18} />
                     </a>
+                    <button className="overlay-btn" title="Share" onClick={(e) => { e.stopPropagation(); setShareFile(image); }}>
+                      <Share2 size={18} />
+                    </button>
                     <button className="overlay-btn danger" title="Delete" onClick={(e) => { e.stopPropagation(); handleDelete(image); }} disabled={deletingId === image._id}>
                       <Trash2 size={18} />
                     </button>
@@ -204,6 +299,28 @@ const ImageGallery = ({ images, onImageDelete, onRefresh, token, onPreview, view
           </div>
         );
       })}
+
+      {shareFile && (
+        <ShareModal
+          isOpen={!!shareFile}
+          onClose={() => setShareFile(null)}
+          fileId={shareFile._id}
+          fileType={shareFile.mediaType || 'image'}
+          fileName={shareFile.originalName}
+          token={token}
+        />
+      )}
+
+      {confirmDeleteFile && (
+        <ConfirmModal
+          isOpen={!!confirmDeleteFile}
+          title="Delete File"
+          message={`Are you sure you want to delete "${confirmDeleteFile.originalName}"? This action cannot be undone.`}
+          confirmText="Delete"
+          onCancel={() => setConfirmDeleteFile(null)}
+          onConfirm={() => executeDelete(confirmDeleteFile)}
+        />
+      )}
     </div>
   );
 };

@@ -6,11 +6,12 @@ const fs = require('fs');
 const Image = require('../models/Image');
 const { protect } = require('../middleware/authMiddleware');
 const archiver = require('archiver');
+const { logActivity } = require('./activityRoutes');
 
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'uploads/');
+    cb(null, path.join(__dirname, '..', 'uploads'));
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + '-' + file.originalname);
@@ -20,7 +21,7 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 20 * 1024 * 1024 // 20MB limit
+    fileSize: 50 * 1024 * 1024 // 50MB limit
   },
   fileFilter: function (req, file, cb) {
     const filetypes = /jpeg|jpg|png|gif|webp/;
@@ -39,7 +40,7 @@ const upload = multer({
 // @access  Private
 router.get('/', protect, async (req, res) => {
   try {
-    const images = await Image.find({ user: req.user.id }).sort({ uploadDate: -1 });
+    const images = await Image.find({ user: req.user.id, isDeleted: { $ne: true } }).sort({ uploadDate: -1 });
     res.json(images);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching images', error: error.message });
@@ -49,7 +50,7 @@ router.get('/', protect, async (req, res) => {
 // @desc    Upload multiple images
 // @route   POST /api/images/upload-multiple
 // @access  Private
-router.post('/upload-multiple', protect, upload.array('images', 1000), async (req, res) => {
+router.post('/upload-multiple', protect, upload.array('images', 50), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ message: 'No files uploaded' });
@@ -68,6 +69,9 @@ router.post('/upload-multiple', protect, upload.array('images', 1000), async (re
 
       const savedImage = await newImage.save();
       uploadedImages.push(savedImage);
+
+      // Log activity
+      await logActivity(req.user.id, 'upload', savedImage.originalName, 'image');
     }
 
     res.status(201).json({
@@ -97,6 +101,10 @@ router.post('/upload', protect, upload.single('image'), async (req, res) => {
     });
 
     const savedImage = await newImage.save();
+
+    // Log activity
+    await logActivity(req.user.id, 'upload', savedImage.originalName, 'image');
+
     res.status(201).json(savedImage);
   } catch (error) {
     res.status(500).json({ message: 'Error uploading image', error: error.message });
@@ -109,25 +117,69 @@ router.post('/upload', protect, upload.single('image'), async (req, res) => {
 router.delete('/:id', protect, async (req, res) => {
   try {
     const image = await Image.findById(req.params.id);
+    if (!image) return res.status(404).json({ message: 'Image not found' });
+    if (image.user.toString() !== req.user.id) return res.status(401).json({ message: 'Not authorized' });
 
-    if (!image) {
-      return res.status(404).json({ message: 'Image not found' });
-    }
+    // Soft delete — move to trash
+    image.isDeleted = true;
+    image.deletedAt = new Date();
+    image.folder = null;
+    await image.save();
 
-    // Check if the image belongs to the user
-    if (image.user.toString() !== req.user.id) {
-      return res.status(401).json({ message: 'User not authorized to delete this image' });
-    }
+    // Log activity
+    await logActivity(req.user.id, 'delete', image.originalName, 'image');
 
-    // Delete file from filesystem
-    if (fs.existsSync(image.path)) {
-      fs.unlinkSync(image.path);
-    }
-
-    await image.deleteOne(); // Use deleteOne() on the document instance
-    res.json({ message: 'Image deleted successfully' });
+    res.json({ message: 'Image moved to trash' });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting image', error: error.message });
+  }
+});
+
+// @desc    Get trashed images
+// @route   GET /api/images/trash
+router.get('/trash', protect, async (req, res) => {
+  try {
+    const images = await Image.find({ user: req.user.id, isDeleted: true }).sort({ deletedAt: -1 });
+    res.json(images);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching trash', error: error.message });
+  }
+});
+
+// @desc    Restore trashed image
+// @route   PUT /api/images/:id/restore
+router.put('/:id/restore', protect, async (req, res) => {
+  try {
+    const image = await Image.findById(req.params.id);
+    if (!image || image.user.toString() !== req.user.id) return res.status(404).json({ message: 'Not found' });
+    image.isDeleted = false;
+    image.deletedAt = null;
+    await image.save();
+
+    // Log activity
+    await logActivity(req.user.id, 'restore', image.originalName, 'image');
+
+    res.json(image);
+  } catch (error) {
+    res.status(500).json({ message: 'Error restoring image', error: error.message });
+  }
+});
+
+// @desc    Permanently delete trashed image
+// @route   DELETE /api/images/:id/permanent
+router.delete('/:id/permanent', protect, async (req, res) => {
+  try {
+    const image = await Image.findById(req.params.id);
+    if (!image || image.user.toString() !== req.user.id) return res.status(404).json({ message: 'Not found' });
+    if (fs.existsSync(image.path)) fs.unlinkSync(image.path);
+    await image.deleteOne();
+
+    // Log activity
+    await logActivity(req.user.id, 'delete', image.originalName || image.filename, 'image', { permanent: true });
+
+    res.json({ message: 'Permanently deleted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error permanently deleting', error: error.message });
   }
 });
 

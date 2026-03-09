@@ -5,13 +5,14 @@ const fs = require('fs');
 const Document = require('../models/Document');
 const { protect } = require('../middleware/authMiddleware');
 const archiver = require('archiver');
+const { logActivity } = require('./activityRoutes');
 
 const router = express.Router();
 
 // Multer storage for documents
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'documents/');
+    cb(null, path.join(__dirname, '..', 'documents'));
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
@@ -43,6 +44,12 @@ router.post('/upload-multiple', protect, upload.array('documents', 10), async (r
     }));
 
     const result = await Document.insertMany(docs);
+
+    // Log activity
+    for (const doc of docs) {
+      await logActivity(req.user.id, 'upload', doc.originalName, 'document');
+    }
+
     res.status(201).json(result);
   } catch (error) {
     console.error('Document upload error:', error);
@@ -55,7 +62,7 @@ router.post('/upload-multiple', protect, upload.array('documents', 10), async (r
 // @access  Private
 router.get('/', protect, async (req, res) => {
   try {
-    const docs = await Document.find({ user: req.user.id }).sort({ uploadDate: -1 });
+    const docs = await Document.find({ user: req.user.id, isDeleted: { $ne: true } }).sort({ uploadDate: -1 });
     res.json(docs);
   } catch (error) {
     console.error('Error fetching documents:', error);
@@ -69,27 +76,55 @@ router.get('/', protect, async (req, res) => {
 router.delete('/:id', protect, async (req, res) => {
   try {
     const document = await Document.findById(req.params.id);
+    if (!document) return res.status(404).json({ message: 'Document not found' });
+    if (document.user.toString() !== req.user.id) return res.status(401).json({ message: 'Not authorized' });
 
-    if (!document) {
-      return res.status(404).json({ message: 'Document not found' });
-    }
+    document.isDeleted = true;
+    document.deletedAt = new Date();
+    document.folder = null;
+    await document.save();
 
-    // Check if the document belongs to the user
-    if (document.user.toString() !== req.user.id) {
-      return res.status(401).json({ message: 'User not authorized to delete this document' });
-    }
+    // Log activity
+    await logActivity(req.user.id, 'delete', document.originalName, 'document');
 
-    // Delete file from filesystem
-    if (fs.existsSync(document.path)) {
-      fs.unlinkSync(document.path);
-    }
-
-    await document.deleteOne();
-    res.json({ message: 'Document deleted successfully' });
+    res.json({ message: 'Document moved to trash' });
   } catch (error) {
-    console.error('Error deleting document:', error);
     res.status(500).json({ message: 'Error deleting document', error: error.message });
   }
+});
+
+router.get('/trash', protect, async (req, res) => {
+  try {
+    const docs = await Document.find({ user: req.user.id, isDeleted: true }).sort({ deletedAt: -1 });
+    res.json(docs);
+  } catch (error) { res.status(500).json({ message: 'Error fetching trash' }); }
+});
+
+router.put('/:id/restore', protect, async (req, res) => {
+  try {
+    const doc = await Document.findById(req.params.id);
+    if (!doc || doc.user.toString() !== req.user.id) return res.status(404).json({ message: 'Not found' });
+    doc.isDeleted = false; doc.deletedAt = null; await doc.save();
+
+    // Log activity
+    await logActivity(req.user.id, 'restore', doc.originalName, 'document');
+
+    res.json(doc);
+  } catch (error) { res.status(500).json({ message: 'Error restoring' }); }
+});
+
+router.delete('/:id/permanent', protect, async (req, res) => {
+  try {
+    const doc = await Document.findById(req.params.id);
+    if (!doc || doc.user.toString() !== req.user.id) return res.status(404).json({ message: 'Not found' });
+    if (fs.existsSync(doc.path)) fs.unlinkSync(doc.path);
+    await doc.deleteOne();
+
+    // Log activity
+    await logActivity(req.user.id, 'delete', doc.originalName || doc.filename, 'document', { permanent: true });
+
+    res.json({ message: 'Permanently deleted' });
+  } catch (error) { res.status(500).json({ message: 'Error permanently deleting' }); }
 });
 
 // @desc    Download selected documents as zip

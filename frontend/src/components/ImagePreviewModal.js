@@ -1,8 +1,10 @@
 import React, { useEffect, useCallback, useState } from 'react';
-import { X, Download, Trash2, ChevronLeft, ChevronRight, ExternalLink, FileText, Loader, FolderOpen, ArrowLeft } from 'lucide-react';
+import { X, Download, Trash2, ChevronLeft, ChevronRight, ExternalLink, FileText, Loader, FolderOpen, ArrowLeft, Pencil, Play, Pause, Share2 } from 'lucide-react';
+import ImageEditor from './ImageEditor';
+import ShareModal from './ShareModal';
 import './ImagePreviewModal.css';
 
-const API_URL = process.env.REACT_APP_API_URL ?? 'https://gallayhub.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL ?? 'https://galleryhub.onrender.com';
 
 const getMediaUrl = (item) => {
     if (item.mediaType === 'video') return `${API_URL}/videos/${item.filename}`;
@@ -179,9 +181,11 @@ const DocViewer = ({ item, mediaUrl, icon }) => {
     );
 };
 
-const ImagePreviewModal = ({ image, images, onClose, onDelete, onNavigate, folders = [], onMoveToFolder, onRemoveFromFolder }) => {
+const ImagePreviewModal = ({ image, images, onClose, onDelete, onNavigate, folders = [], onMoveToFolder, onRemoveFromFolder, token, onRefresh }) => {
     const currentIndex = images.findIndex((img) => img._id === image._id);
     const [showFolderPicker, setShowFolderPicker] = useState(false);
+    const [showEditor, setShowEditor] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
 
     const goPrev = useCallback(() => {
         if (currentIndex > 0) onNavigate(images[currentIndex - 1]);
@@ -206,6 +210,17 @@ const ImagePreviewModal = ({ image, images, onClose, onDelete, onNavigate, folde
         document.body.style.overflow = 'hidden';
         return () => { document.body.style.overflow = ''; };
     }, []);
+
+    // Slideshow
+    const [slideshowActive, setSlideshowActive] = useState(false);
+    useEffect(() => {
+        if (!slideshowActive) return;
+        const timer = setInterval(() => {
+            if (currentIndex < images.length - 1) goNext();
+            else setSlideshowActive(false);
+        }, 5000);
+        return () => clearInterval(timer);
+    }, [slideshowActive, currentIndex, images.length, goNext]);
 
     const formatDate = (d) => new Date(d).toLocaleDateString('en-US', {
         year: 'numeric', month: 'short', day: 'numeric',
@@ -261,8 +276,13 @@ const ImagePreviewModal = ({ image, images, onClose, onDelete, onNavigate, folde
                 <div className="preview-info-bar">
                     <div className="preview-details">
                         <h3>{image.originalName}</h3>
-                        <span className="preview-date">{formatDate(image.uploadDate || image.createdAt)}</span>
-                        <span className="preview-counter">{currentIndex + 1} / {images.length}</span>
+                        <div className="preview-meta-row">
+                            <span className="preview-date">{formatDate(image.uploadDate || image.createdAt)}</span>
+                            {image.size && <span className="preview-meta-tag">{image.size < 1024 ? image.size + ' B' : image.size < 1024 * 1024 ? (image.size / 1024).toFixed(1) + ' KB' : (image.size / (1024 * 1024)).toFixed(1) + ' MB'}</span>}
+                            <span className="preview-meta-tag">{(image.originalName?.split('.').pop() || '').toUpperCase()}</span>
+                            <span className="preview-meta-tag">{image.mediaType === 'video' ? '🎥 Video' : image.mediaType === 'document' ? '📄 Document' : '🖼️ Image'}</span>
+                            <span className="preview-counter">{currentIndex + 1} / {images.length}</span>
+                        </div>
                     </div>
                     <div className="preview-actions">
                         {/* Move to folder */}
@@ -313,6 +333,19 @@ const ImagePreviewModal = ({ image, images, onClose, onDelete, onNavigate, folde
                                 </div>
                             )}
                         </div>
+                        {images.length > 1 && (
+                            <button className={`preview-action-btn ${slideshowActive ? 'active-folder' : ''}`} onClick={() => setSlideshowActive(!slideshowActive)} title={slideshowActive ? 'Pause slideshow' : 'Start slideshow'}>
+                                {slideshowActive ? <Pause size={18} /> : <Play size={18} />}
+                            </button>
+                        )}
+                        {(!image.mediaType || image.mediaType === 'image') && (
+                            <button className="preview-action-btn" onClick={() => setShowEditor(true)} title="Edit image">
+                                <Pencil size={18} />
+                            </button>
+                        )}
+                        <button className="preview-action-btn" onClick={() => setShowShareModal(true)} title="Share">
+                            <Share2 size={18} />
+                        </button>
                         <a
                             href={mediaUrl}
                             target="_blank"
@@ -341,6 +374,24 @@ const ImagePreviewModal = ({ image, images, onClose, onDelete, onNavigate, folde
                         </button>
                     </div>
                 </div>
+                {showEditor && (
+                    <ImageEditor
+                        image={image}
+                        token={token}
+                        onClose={() => setShowEditor(false)}
+                        onSave={() => { setShowEditor(false); onRefresh && onRefresh(); }}
+                    />
+                )}
+                {showShareModal && (
+                    <ShareModal
+                        isOpen={showShareModal}
+                        onClose={() => setShowShareModal(false)}
+                        fileId={image._id}
+                        fileType={image.mediaType || 'image'}
+                        fileName={image.originalName}
+                        token={token}
+                    />
+                )}
             </div>
         </div>
     );

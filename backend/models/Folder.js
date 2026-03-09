@@ -18,7 +18,12 @@ const folderSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
-    }
+    },
+    sharedWith: [{
+        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        permission: { type: String, enum: ['view', 'edit'], default: 'view' },
+        addedAt: { type: Date, default: Date.now }
+    }]
 });
 
 // Ensure unique folder names per user

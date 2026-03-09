@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Search, Moon, Sun, Monitor, LogOut, ChevronDown, User, Settings } from 'lucide-react';
 import './Header.css';
 
-const API_URL = process.env.REACT_APP_API_URL ?? 'https://gallayhub.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL ?? 'https://galleryhub.onrender.com';
 
 const Logo = () => (
   <img src="/favicon.png" alt="GalleryHub Logo" className="logo-svg" style={{ width: '32px', height: '32px', borderRadius: '8px', objectFit: 'cover' }} />
@@ -66,7 +66,7 @@ const Header = ({ userInfo, onLogout, darkMode, themeMode, setThemeMode, searchQ
 
         {/* User Avatar */}
         <div className="user-menu" ref={dropdownRef}>
-          <button className="user-avatar-btn" onClick={() => setShowDropdown(!showDropdown)}>
+          <button className="user-avatar-btn profile-avatar" onClick={() => setShowDropdown(!showDropdown)}>
             <div className="user-avatar">
               {profilePicUrl ? (
                 <img src={profilePicUrl} alt="" className="avatar-img" />

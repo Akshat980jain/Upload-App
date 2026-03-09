@@ -1,0 +1,337 @@
+/* ─── Image Editor ────────────────────────────── */
+.editor-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: rgba(0, 0, 0, 0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+.editor-modal {
+    width: 95vw;
+    height: 95vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--surface, #1a1a2e);
+    border-radius: var(--radius, 12px);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Header */
+.editor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+
+.editor-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    margin: 0;
+}
+
+.editor-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.editor-close {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.editor-close:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* Buttons */
+.editor-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.06);
+    color: white;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.editor-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.editor-btn.active {
+    background: var(--primary, #4285f4);
+    border-color: var(--primary);
+}
+
+.editor-btn.primary {
+    background: var(--primary, #4285f4);
+    border-color: var(--primary);
+}
+
+.editor-btn.primary:hover {
+    opacity: 0.9;
+}
+
+.editor-btn.primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.editor-btn.ghost {
+    border-color: transparent;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.editor-btn.ghost:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+/* Canvas Area */
+.editor-canvas-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 20px;
+    background: #0d0d16;
+}
+
+.editor-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: filter 0.2s ease, transform 0.3s ease;
+    border-radius: 4px;
+}
+
+/* ReactCrop overrides */
+.ReactCrop {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.ReactCrop__crop-selection {
+    border: 2px solid var(--primary, #4285f4) !important;
+}
+
+/* Toolbar */
+.editor-toolbar {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    flex-shrink: 0;
+}
+
+.editor-tools {
+    display: flex;
+    gap: 4px;
+    padding: 10px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.editor-tool {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.6);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.editor-tool:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.editor-tool.active {
+    color: var(--primary, #4285f4);
+    background: rgba(66, 133, 244, 0.12);
+}
+
+/* Controls panel */
+.editor-controls {
+    padding: 14px 20px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+/* Rotate */
+.rotate-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.rotation-label {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-left: 8px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Filter presets */
+.filter-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.filter-presets {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+}
+
+.filter-preset {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 6px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+
+.filter-preset:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.filter-preset.active {
+    border-color: var(--primary, #4285f4);
+}
+
+.filter-preset-preview {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #111;
+    flex-shrink: 0;
+}
+
+.filter-preset-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.filter-preset span {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+}
+
+/* Filter sliders */
+.filter-sliders {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+}
+
+.filter-slider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 200px;
+    flex: 1;
+}
+
+.filter-slider label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    width: 70px;
+    flex-shrink: 0;
+}
+
+.filter-slider input[type="range"] {
+    flex: 1;
+    accent-color: var(--primary, #4285f4);
+}
+
+.filter-value {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    width: 40px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Crop */
+.crop-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.crop-hint {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 0;
+}
+
+.crop-dimensions {
+    font-size: 13px;
+    color: var(--primary, #4285f4);
+    font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .editor-modal {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+    }
+
+    .editor-controls {
+        max-height: 180px;
+    }
+
+    .filter-sliders {
+        flex-direction: column;
+    }
+
+    .filter-slider {
+        min-width: 100%;
+    }
+}

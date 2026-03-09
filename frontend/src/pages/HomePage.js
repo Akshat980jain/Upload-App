@@ -4,7 +4,7 @@ import Login from '../components/Login';
 import Register from '../components/Register';
 import './HomePage.css';
 
-const HomePage = ({ token, onLogin, userInfo, onLogout, darkMode, setDarkMode }) => {
+const HomePage = ({ token, onLogin, userInfo, onLogout, darkMode }) => {
   const [showLogin, setShowLogin] = useState(true);
 
   // If logged in, redirect to gallery

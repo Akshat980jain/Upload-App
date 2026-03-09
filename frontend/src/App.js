@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import './App.css';
 import HomePage from './pages/HomePage';
 import ImageUploadPage from './pages/ImageUploadPage';
+import SharePageView from './pages/SharePageView';
 
 function App() {
   const [userInfo, setUserInfo] = useState(null);
@@ -83,6 +84,10 @@ function App() {
       element: token
         ? <ImageUploadPage token={token} userInfo={userInfo} onLogout={handleLogout} darkMode={darkMode} themeMode={themeMode} setThemeMode={handleSetThemeMode} />
         : <Navigate to="/" replace />,
+    },
+    {
+      path: '/share/:token',
+      element: <SharePageView />,
     },
   ], {
     future: { v7_startTransition: true }

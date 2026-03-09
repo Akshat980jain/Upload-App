@@ -8,7 +8,9 @@ const documentSchema = new mongoose.Schema({
   type: { type: String, required: true }, // ppt, pdf, xls, etc.
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   folder: { type: mongoose.Schema.Types.ObjectId, ref: 'Folder', default: null },
-  uploadDate: { type: Date, default: Date.now }
+  uploadDate: { type: Date, default: Date.now },
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date, default: null }
 });
 
 module.exports = mongoose.model('Document', documentSchema); 

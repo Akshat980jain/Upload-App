@@ -30,7 +30,9 @@ const imageSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Folder',
     default: null
-  }
+  },
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date, default: null }
 });
 
 module.exports = mongoose.model('Image', imageSchema); 

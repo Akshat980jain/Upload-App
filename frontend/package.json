@@ -1,5 +1,5 @@
 {
-  "name": "frontend-new",
+  "name": "galleryhub-frontend",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -8,6 +8,8 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.6.8",
+    "intro.js": "^8.3.2",
+    "intro.js-react": "^1.0.0",
     "lucide-react": "^0.576.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

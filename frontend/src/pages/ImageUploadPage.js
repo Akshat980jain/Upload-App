@@ -1,30 +1,24 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Image, FolderOpen, Layers, Sun, Moon, Monitor, LogOut, RefreshCw, Grid, List,
+  Image, FolderOpen, Sun, Moon, Monitor, LogOut, RefreshCw, Grid, List, LayoutGrid,
   User, Camera, Lock, Mail, Edit3, Check, X, HardDrive, Trash2, Bell, Palette, Shield, ChevronRight,
-  FolderPlus, Plus, ArrowLeft, MoreVertical
+  FolderPlus, Plus, ArrowLeft, MoreVertical, ArrowUp, ArrowDown, Download, CheckSquare, RotateCcw
 } from 'lucide-react';
 import Header from '../components/Header';
 import BottomDock from '../components/BottomDock';
 import ImageGallery from '../components/ImageGallery';
 import UploadModal from '../components/ImageUpload';
 import ImagePreviewModal from '../components/ImagePreviewModal';
+import ShareFolderModal from '../components/ShareFolderModal';
+import ActivityFeed from '../components/ActivityFeed';
+import OnboardingTour from '../components/OnboardingTour';
 import SkeletonGrid from '../components/SkeletonCard';
+import ConfirmModal from '../components/ConfirmModal';
 import toast from 'react-hot-toast';
 import './ImageUploadPage.css';
 
-const API_URL = process.env.REACT_APP_API_URL ?? 'https://gallayhub.onrender.com';
-
-// ─── Smart Category Definitions ─────────────────
-const CATEGORY_GROUPS = [
-  { name: 'Photos', icon: '📸', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'tiff', 'svg'], color: '#4285f4' },
-  { name: 'Videos', icon: '🎬', extensions: ['mp4', 'mov', 'avi', 'mkv', 'webm', 'wmv', 'flv'], color: '#ea4335' },
-  { name: 'Documents', icon: '📝', extensions: ['pdf', 'doc', 'docx', 'txt', 'rtf'], color: '#34a853' },
-  { name: 'Spreadsheets', icon: '📊', extensions: ['xls', 'xlsx', 'csv'], color: '#fbbc04' },
-  { name: 'Presentations', icon: '📑', extensions: ['ppt', 'pptx'], color: '#a855f7' },
-  { name: 'Archives', icon: '📦', extensions: ['zip', 'rar', '7z', 'tar', 'gz'], color: '#ec4899' },
-];
+const API_URL = process.env.REACT_APP_API_URL ?? 'https://galleryhub.onrender.com';
 
 const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setThemeMode }) => {
   const [images, setImages] = useState([]);
@@ -39,9 +33,28 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
   const [viewMode, setViewMode] = useState('grid');
   const [activeCategory, setActiveCategory] = useState('all');
   const [settingsSection, setSettingsSection] = useState('main');
-  const [notifications, setNotifications] = useState(true);
-  const [confirmDelete, setConfirmDelete] = useState(true);
-  const [accentColor, setAccentColor] = useState('#4285f4');
+  const [notifications, setNotifications] = useState(() => {
+    const saved = localStorage.getItem('settings_notifications');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [confirmDelete, setConfirmDelete] = useState(() => {
+    const saved = localStorage.getItem('settings_confirmDelete');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [accentColor, setAccentColor] = useState(() => {
+    return localStorage.getItem('settings_accentColor') || '#4285f4';
+  });
+  const [sortBy, setSortBy] = useState('date');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [selectedFiles, setSelectedFiles] = useState(new Set());
+  const [isSelecting, setIsSelecting] = useState(false);
+
+  // Apply persisted accent color on mount
+  useEffect(() => {
+    if (accentColor && accentColor !== '#4285f4') {
+      document.documentElement.style.setProperty('--primary', accentColor);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Profile edit states
   const [editName, setEditName] = useState(userInfo?.name || '');
@@ -68,6 +81,7 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
   const [renamingFolder, setRenamingFolder] = useState(null);
   const [renameFolderName, setRenameFolderName] = useState('');
   const [folderMenuId, setFolderMenuId] = useState(null);
+  const [sharingFolder, setSharingFolder] = useState(null);
 
   const profilePicRef = useRef(null);
   const folderMenuRef = useRef(null);
@@ -80,29 +94,35 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!response.ok) {
-      if (response.status === 401) { navigate('/'); return []; }
+      if (response.status === 401) { onLogout(); navigate('/'); return []; }
       throw new Error('Failed to fetch images');
     }
     return response.json();
-  }, [token, navigate]);
+  }, [token, navigate, onLogout]);
 
   const fetchVideos = useCallback(async () => {
     if (!token) return [];
     const response = await fetch(`${API_URL}/api/videos`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (!response.ok) return [];
+    if (!response.ok) {
+      if (response.status === 401) { onLogout(); navigate('/'); return []; }
+      return [];
+    }
     return response.json();
-  }, [token]);
+  }, [token, navigate, onLogout]);
 
   const fetchDocuments = useCallback(async () => {
     if (!token) return [];
     const response = await fetch(`${API_URL}/api/documents`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (!response.ok) return [];
+    if (!response.ok) {
+      if (response.status === 401) { onLogout(); navigate('/'); return []; }
+      return [];
+    }
     return response.json();
-  }, [token]);
+  }, [token, navigate, onLogout]);
 
   const fetchAllMedia = useCallback(async () => {
     if (!token) { navigate('/'); return; }
@@ -186,9 +206,20 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
       return true;
     });
 
-  const filteredMedia = categoryFiltered.filter((item) =>
-    item.originalName?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredMedia = categoryFiltered
+    .filter((item) => item.originalName?.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => {
+      let cmp = 0;
+      switch (sortBy) {
+        case 'name': cmp = (a.originalName || '').localeCompare(b.originalName || ''); break;
+        case 'size': cmp = (a.size || 0) - (b.size || 0); break;
+        case 'type': cmp = (a.mediaType || '').localeCompare(b.mediaType || ''); break;
+        case 'date': default: cmp = new Date(b.uploadDate || b.createdAt) - new Date(a.uploadDate || a.createdAt); break;
+      }
+      return sortBy === 'date'
+        ? (sortOrder === 'asc' ? -cmp : cmp)
+        : (sortOrder === 'asc' ? cmp : -cmp);
+    });
 
   // ─── Callbacks ──────────────────────────────────
   const handleImageUpload = (newImage) => {
@@ -207,27 +238,91 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
     setImages((prev) => prev.filter((img) => img._id !== deletedId));
     setVideos((prev) => prev.filter((vid) => vid._id !== deletedId));
     setDocuments((prev) => prev.filter((doc) => doc._id !== deletedId));
+    selectedFiles.delete(deletedId);
+    setSelectedFiles(new Set(selectedFiles));
     toast.success('File deleted');
+  };
+
+  // ─── Multi-Select Handlers ─────────────────────
+  const toggleFileSelect = (id) => {
+    setSelectedFiles(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const clearSelection = () => { setSelectedFiles(new Set()); setIsSelecting(false); };
+
+  const selectAll = () => {
+    setSelectedFiles(new Set(filteredMedia.map(m => m._id)));
+    setIsSelecting(true);
+  };
+
+  const [isBulkDeleteConfirmOpen, setIsBulkDeleteConfirmOpen] = useState(false);
+
+  const handleBulkDelete = () => {
+    if (confirmDelete) {
+      setIsBulkDeleteConfirmOpen(true);
+      return;
+    }
+    executeBulkDelete();
+  };
+
+  const executeBulkDelete = async () => {
+    setIsBulkDeleteConfirmOpen(false);
+    const items = allMedia.filter(m => selectedFiles.has(m._id));
+    try {
+      await Promise.all(items.map(item => {
+        const endpoint = item.mediaType === 'video' ? 'videos' : item.mediaType === 'document' ? 'documents' : 'images';
+        return fetch(`${API_URL}/api/${endpoint}/${item._id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      }));
+      toast.success(`${selectedFiles.size} files deleted`);
+      clearSelection();
+      fetchAllMedia();
+    } catch (err) {
+      toast.error('Bulk delete failed');
+    }
+  };
+
+  const handleBulkDownload = async () => {
+    const grouped = { images: [], videos: [], documents: [] };
+    allMedia.filter(m => selectedFiles.has(m._id)).forEach(m => {
+      if (m.mediaType === 'video') grouped.videos.push(m._id);
+      else if (m.mediaType === 'document') grouped.documents.push(m._id);
+      else grouped.images.push(m._id);
+    });
+    try {
+      for (const [type, ids] of Object.entries(grouped)) {
+        if (ids.length === 0) continue;
+        const bodyKey = type === 'images' ? 'imageIds' : type === 'videos' ? 'videoIds' : 'documentIds';
+        const res = await fetch(`${API_URL}/api/${type}/download-zip`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ [bodyKey]: ids })
+        });
+        if (!res.ok) throw new Error(`Failed to download ${type}`);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = `${type}.zip`; a.click();
+        URL.revokeObjectURL(url);
+      }
+      toast.success('Download started');
+    } catch (err) {
+      toast.error('Bulk download failed');
+    }
   };
 
   // ─── Stats ──────────────────────────────────────
   const totalSize = allMedia.reduce((sum, item) => sum + (item.size || 0), 0);
+  const STORAGE_QUOTA = 500 * 1024 * 1024; // 500 MB
+  const usagePercent = Math.min((totalSize / STORAGE_QUOTA) * 100, 100);
+  const quotaColor = usagePercent > 80 ? '#ea4335' : usagePercent > 50 ? '#fbbc04' : '#34a853';
   const formatStorage = (bytes) => {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
-  };
-
-  // ─── Smart Categories ───────────────────────────
-  const getSmartCategories = () => {
-    return CATEGORY_GROUPS.map(cat => {
-      const matching = allMedia.filter(item => {
-        const ext = (item.originalName || '').split('.').pop()?.toLowerCase();
-        return cat.extensions.includes(ext);
-      });
-      return { ...cat, count: matching.length, size: matching.reduce((s, i) => s + (i.size || 0), 0) };
-    }).filter(cat => cat.count > 0);
   };
 
   // ─── Folder Handlers ────────────────────────────
@@ -338,6 +433,52 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
     setActiveTab(tab);
     if (tab === 'settings') setSettingsSection('main');
     if (tab !== 'folders') setSelectedFolder(null);
+    if (tab === 'trash') fetchTrash();
+  };
+
+  // ─── Trash / Recycle Bin ────────────────────
+  const [trashedItems, setTrashedItems] = useState([]);
+
+  const fetchTrash = async () => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const [imgRes, vidRes, docRes] = await Promise.all([
+        fetch(`${API_URL}/api/images/trash`, { headers }),
+        fetch(`${API_URL}/api/videos/trash`, { headers }),
+        fetch(`${API_URL}/api/documents/trash`, { headers }),
+      ]);
+      const [imgs, vids, docs] = await Promise.all([imgRes.json(), vidRes.json(), docRes.json()]);
+      const all = [
+        ...(Array.isArray(imgs) ? imgs : []).map(i => ({ ...i, mediaType: 'image' })),
+        ...(Array.isArray(vids) ? vids : []).map(v => ({ ...v, mediaType: 'video' })),
+        ...(Array.isArray(docs) ? docs : []).map(d => ({ ...d, mediaType: 'document' })),
+      ].sort((a, b) => new Date(b.deletedAt) - new Date(a.deletedAt));
+      setTrashedItems(all);
+    } catch (err) { console.error('Trash fetch error:', err); }
+  };
+
+  const handleRestore = async (item) => {
+    const endpoint = item.mediaType === 'video' ? 'videos' : item.mediaType === 'document' ? 'documents' : 'images';
+    try {
+      await fetch(`${API_URL}/api/${endpoint}/${item._id}/restore`, {
+        method: 'PUT', headers: { Authorization: `Bearer ${token}` }
+      });
+      setTrashedItems(prev => prev.filter(t => t._id !== item._id));
+      fetchAllMedia();
+      toast.success('File restored');
+    } catch (err) { toast.error('Restore failed'); }
+  };
+
+  const handlePermanentDelete = async (item) => {
+    if (!window.confirm('Permanently delete this file? This cannot be undone.')) return;
+    const endpoint = item.mediaType === 'video' ? 'videos' : item.mediaType === 'document' ? 'documents' : 'images';
+    try {
+      await fetch(`${API_URL}/api/${endpoint}/${item._id}/permanent`, {
+        method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+      });
+      setTrashedItems(prev => prev.filter(t => t._id !== item._id));
+      toast.success('Permanently deleted');
+    } catch (err) { toast.error('Delete failed'); }
   };
 
   const openUpload = (mode = 'all') => {
@@ -417,7 +558,14 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
   };
 
   // ─── Delete All ───
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+
   const handleDeleteAll = async () => {
+    setConfirmDeleteAll(true);
+  };
+
+  const executeDeleteAll = async () => {
+    setConfirmDeleteAll(false);
     try {
       const allDeletes = [
         ...images.map(img => fetch(`${API_URL}/api/images/${img._id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })),
@@ -435,6 +583,18 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
 
   const profilePicUrl = profilePic ? `${API_URL}/uploads/${profilePic}` : null;
 
+  // ─── Keyboard Shortcuts ──────────────────────────
+  useEffect(() => {
+    const handler = (e) => {
+      // Don't fire shortcuts when typing in input/textarea/select
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+      if (e.ctrlKey && e.key === 'u') { e.preventDefault(); setShowUploadModal(true); }
+      if (e.key === 'Escape') { setShowUploadModal(false); setPreviewImage(null); }
+      if (e.key === 'Delete' && previewImage) { handleMediaDelete(previewImage._id); setPreviewImage(null); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [previewImage]); // eslint-disable-line react-hooks/exhaustive-deps
 
 
   // ─── Tab Render ───
@@ -453,12 +613,29 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
                 </p>
               </div>
               <div className="header-actions-right">
+                <button className={`select-toggle-btn ${isSelecting ? 'active' : ''}`} onClick={() => { if (isSelecting) clearSelection(); else setIsSelecting(true); }} title={isSelecting ? 'Cancel selection' : 'Select files'}>
+                  <CheckSquare size={18} />
+                </button>
+                <div className="sort-controls">
+                  <select className="sort-select" value={sortBy} onChange={e => setSortBy(e.target.value)} title="Sort by">
+                    <option value="date">Date</option>
+                    <option value="name">Name</option>
+                    <option value="size">Size</option>
+                    <option value="type">Type</option>
+                  </select>
+                  <button className="sort-order-btn" onClick={() => setSortOrder(s => s === 'asc' ? 'desc' : 'asc')} title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}>
+                    {sortOrder === 'asc' ? <ArrowUp size={16} /> : <ArrowDown size={16} />}
+                  </button>
+                </div>
                 <div className="view-toggle">
                   <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')} title="Grid view">
                     <Grid size={18} />
                   </button>
                   <button className={`view-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')} title="List view">
                     <List size={18} />
+                  </button>
+                  <button className={`view-btn ${viewMode === 'masonry' ? 'active' : ''}`} onClick={() => setViewMode('masonry')} title="Masonry view">
+                    <LayoutGrid size={18} />
                   </button>
                 </div>
                 <button className="refresh-btn" onClick={fetchAllMedia} title="Refresh">
@@ -507,6 +684,14 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
               </div>
             </div>
 
+            {/* ─── Storage Quota Bar ─── */}
+            <div className="storage-bar-container">
+              <div className="storage-bar">
+                <div className="storage-bar-fill" style={{ width: `${usagePercent}%`, background: quotaColor }} />
+              </div>
+              <span className="storage-bar-label">{formatStorage(totalSize)} / {formatStorage(STORAGE_QUOTA)} used ({usagePercent.toFixed(1)}%)</span>
+            </div>
+
             {/* ─── Quick Folders ─── */}
             {folders.length > 0 && (
               <div className="quick-folders-section">
@@ -516,7 +701,15 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
                 </div>
                 <div className="quick-folders-scroll">
                   {folders.map(folder => (
-                    <button key={folder._id} className="quick-folder-card" onClick={() => { setSelectedFolder(folder); setActiveTab('folders'); }}>
+                    <button key={folder._id} className="quick-folder-card"
+                      onClick={() => { setSelectedFolder(folder); setActiveTab('folders'); }}
+                      onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('drop-highlight'); }}
+                      onDragLeave={(e) => e.currentTarget.classList.remove('drop-highlight')}
+                      onDrop={(e) => {
+                        e.preventDefault(); e.currentTarget.classList.remove('drop-highlight');
+                        try { const { id, mediaType } = JSON.parse(e.dataTransfer.getData('application/json')); handleMoveToFolder(folder._id, id, mediaType); } catch { }
+                      }}
+                    >
                       <div className="quick-folder-icon" style={{ background: `${folder.color}1a` }}>
                         <span>📁</span>
                       </div>
@@ -551,34 +744,13 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
               ))}
             </div>
 
-            {/* ─── Quick Actions (when few files) ─── */}
-            {allMedia.length < 5 && (
-              <div className="quick-actions">
-                <button className="quick-action-card" onClick={() => openUpload('images')}>
-                  <img src="/icon-images.png" alt="" className="quick-action-icon-img" />
-                  <span className="quick-action-label">Upload Images</span>
-                </button>
-                <button className="quick-action-card" onClick={() => openUpload('videos')}>
-                  <img src="/icon-videos.png" alt="" className="quick-action-icon-img" />
-                  <span className="quick-action-label">Upload Videos</span>
-                </button>
-                <button className="quick-action-card" onClick={() => openUpload('documents')}>
-                  <img src="/icon-documents.png" alt="" className="quick-action-icon-img" />
-                  <span className="quick-action-label">Upload Documents</span>
-                </button>
-              </div>
-            )}
+            {/* ─── Dashboard Split (Main & Activity) ─── */}
+            <div className="dashboard-split" style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
 
-            {/* ─── Gallery ─── */}
-            <section className="dashboard-content">
-              {loading ? (
-                <SkeletonGrid count={8} />
-              ) : filteredMedia.length === 0 && allMedia.length === 0 ? (
-                <div className="empty-state-hero">
-                  <div className="empty-state-illustration">📂</div>
-                  <h2 className="empty-state-title">Your gallery is empty</h2>
-                  <p className="empty-state-subtitle">Start uploading images, videos, and documents to see them here</p>
-                  <div className="quick-actions" style={{ width: '100%', maxWidth: 600 }}>
+              <div style={{ flex: '2 1 500px', minWidth: '300px' }}>
+                {/* ─── Quick Actions (when few files) ─── */}
+                {allMedia.length < 5 && (
+                  <div className="quick-actions" style={{ marginBottom: '24px' }}>
                     <button className="quick-action-card" onClick={() => openUpload('images')}>
                       <img src="/icon-images.png" alt="" className="quick-action-icon-img" />
                       <span className="quick-action-label">Upload Images</span>
@@ -592,11 +764,42 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
                       <span className="quick-action-label">Upload Documents</span>
                     </button>
                   </div>
-                </div>
-              ) : (
-                <ImageGallery images={filteredMedia} onImageDelete={handleMediaDelete} onRefresh={fetchAllMedia} token={token} onPreview={setPreviewImage} viewMode={viewMode} />
-              )}
-            </section>
+                )}
+
+                {/* ─── Gallery ─── */}
+                <section className="dashboard-content" style={{ marginTop: 0 }}>
+                  {loading ? (
+                    <SkeletonGrid count={8} />
+                  ) : filteredMedia.length === 0 && allMedia.length === 0 ? (
+                    <div className="empty-state-hero" style={{ padding: '40px 20px' }}>
+                      <div className="empty-state-illustration">📂</div>
+                      <h2 className="empty-state-title">Your gallery is empty</h2>
+                      <p className="empty-state-subtitle">Start uploading images, videos, and documents to see them here</p>
+                      <div className="quick-actions" style={{ width: '100%', maxWidth: '600px', marginTop: '24px' }}>
+                        <button className="quick-action-card" onClick={() => openUpload('images')}>
+                          <img src="/icon-images.png" alt="" className="quick-action-icon-img" />
+                          <span className="quick-action-label">Upload Images</span>
+                        </button>
+                        <button className="quick-action-card" onClick={() => openUpload('videos')}>
+                          <img src="/icon-videos.png" alt="" className="quick-action-icon-img" />
+                          <span className="quick-action-label">Upload Videos</span>
+                        </button>
+                        <button className="quick-action-card" onClick={() => openUpload('documents')}>
+                          <img src="/icon-documents.png" alt="" className="quick-action-icon-img" />
+                          <span className="quick-action-label">Upload Documents</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <ImageGallery images={filteredMedia} onImageDelete={handleMediaDelete} onRefresh={fetchAllMedia} token={token} onPreview={setPreviewImage} viewMode={viewMode} confirmDelete={confirmDelete} isSelecting={isSelecting} selectedFiles={selectedFiles} onToggleSelect={toggleFileSelect} />
+                  )}
+                </section>
+              </div>
+
+              <div style={{ flex: '1 1 300px', minWidth: '300px', maxWidth: '350px', alignSelf: 'flex-start' }}>
+                <ActivityFeed token={token} />
+              </div>
+            </div>
 
           </>
         );
@@ -614,12 +817,20 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
                       <span className="folder-title-dot" style={{ background: selectedFolder.color }}></span>
                       {selectedFolder.name}
                     </h1>
-                    <p className="dashboard-subtitle">{folderFiles.length} file{folderFiles.length !== 1 ? 's' : ''}</p>
+                    <p className="dashboard-subtitle">
+                      {folderFiles.length} file{folderFiles.length !== 1 ? 's' : ''}
+                      {selectedFolder.sharedWith?.length > 0 && ` · Shared with ${selectedFolder.sharedWith.length} people`}
+                    </p>
                   </div>
                 </div>
-                <button className="btn-primary" onClick={() => openUpload('all')} style={{ gap: '6px' }}>
-                  <Plus size={16} /> Upload Here
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className="btn-secondary" onClick={() => setSharingFolder(selectedFolder)} style={{ gap: '6px' }}>
+                    <ShareFolderModal.ShareIcon size={16} /> Share
+                  </button>
+                  <button className="btn-primary" onClick={() => openUpload('all')} style={{ gap: '6px' }}>
+                    <Plus size={16} /> Upload Here
+                  </button>
+                </div>
               </div>
               {folderFiles.length === 0 ? (
                 <div className="empty-tab">
@@ -720,7 +931,14 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
                         </div>
                       </div>
                     ) : (
-                      <button className="media-folder-card" onClick={() => setSelectedFolder(folder)}>
+                      <button className="media-folder-card" onClick={() => setSelectedFolder(folder)}
+                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('drop-highlight'); }}
+                        onDragLeave={(e) => e.currentTarget.classList.remove('drop-highlight')}
+                        onDrop={(e) => {
+                          e.preventDefault(); e.currentTarget.classList.remove('drop-highlight');
+                          try { const { id, mediaType } = JSON.parse(e.dataTransfer.getData('application/json')); handleMoveToFolder(folder._id, id, mediaType); } catch { }
+                        }}
+                      >
                         <div className="media-folder-icon" style={{ background: `${folder.color}1a` }}>
                           <span style={{ fontSize: '24px' }}>📁</span>
                         </div>
@@ -744,6 +962,9 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
                         </button>
                         {folderMenuId === folder._id && (
                           <div className="folder-context-menu animate-slide-down">
+                            <button onClick={() => { setSharingFolder(folder); setFolderMenuId(null); }}>
+                              <ShareFolderModal.ShareIcon size={14} /> Share
+                            </button>
                             <button onClick={() => { setRenamingFolder(folder._id); setRenameFolderName(folder.name); setFolderMenuId(null); }}>
                               <Edit3 size={14} /> Rename
                             </button>
@@ -758,40 +979,54 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
                 ))}
               </div>
             )}
+
+            {sharingFolder && (
+              <ShareFolderModal
+                isOpen={!!sharingFolder}
+                onClose={() => setSharingFolder(null)}
+                folderId={sharingFolder._id}
+                folderName={sharingFolder.name}
+                token={token}
+                onRefresh={fetchFolders}
+              />
+            )}
           </div>
         );
 
-      case 'tags':
-        const smartCategories = getSmartCategories();
+      case 'trash':
         return (
           <div className="tab-content animate-fade-in">
             <div className="dashboard-header">
               <div>
-                <h1 className="dashboard-title">Categories</h1>
-                <p className="dashboard-subtitle">Browse by file type</p>
+                <h1 className="dashboard-title">Trash</h1>
+                <p className="dashboard-subtitle">{trashedItems.length} item{trashedItems.length !== 1 ? 's' : ''} · Auto-deleted after 30 days</p>
               </div>
+              {trashedItems.length > 0 && (
+                <button className="btn-secondary" onClick={fetchTrash}><RefreshCw size={16} /> Refresh</button>
+              )}
             </div>
-            {smartCategories.length === 0 ? (
-              <div className="empty-tab"><Layers size={48} /><h3>No categories yet</h3><p>Upload files to see them categorized here</p></div>
+            {trashedItems.length === 0 ? (
+              <div className="empty-tab"><Trash2 size={48} /><h3>Trash is empty</h3><p>Deleted files will appear here for 30 days</p></div>
             ) : (
-              <div className="category-grid">
-                {smartCategories.map((cat) => (
-                  <button key={cat.name} className="category-card" onClick={() => {
-                    // Filter home by these extensions
-                    setSearchQuery('.' + cat.extensions[0]);
-                    setActiveCategory('all');
-                    setActiveTab('home');
-                    toast.success(`Showing ${cat.name}`);
-                  }}>
-                    <div className="category-card-icon" style={{ background: `${cat.color}1a` }}>
-                      <span>{cat.icon}</span>
+              <div className="trash-list">
+                {trashedItems.map(item => {
+                  const daysLeft = Math.max(0, 30 - Math.floor((Date.now() - new Date(item.deletedAt)) / 86400000));
+                  return (
+                    <div key={item._id} className="trash-item">
+                      <div className="trash-item-info">
+                        <span className="trash-item-icon">{item.mediaType === 'video' ? '🎥' : item.mediaType === 'document' ? '📄' : '🖼️'}</span>
+                        <div className="trash-item-meta">
+                          <span className="trash-item-name">{item.originalName}</span>
+                          <span className="trash-item-time">{daysLeft} day{daysLeft !== 1 ? 's' : ''} left</span>
+                        </div>
+                      </div>
+                      <div className="trash-item-actions">
+                        <button className="btn-secondary" onClick={() => handleRestore(item)} title="Restore"><RotateCcw size={14} /> Restore</button>
+                        <button className="btn-danger" onClick={() => handlePermanentDelete(item)} title="Delete forever" style={{ padding: '6px 12px', fontSize: '12px' }}><Trash2 size={14} /></button>
+                      </div>
                     </div>
-                    <div className="category-card-info">
-                      <p className="category-card-name">{cat.name}</p>
-                      <p className="category-card-meta">{cat.count} file{cat.count !== 1 ? 's' : ''} · {formatStorage(cat.size)}</p>
-                    </div>
-                  </button>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -970,6 +1205,7 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
                 <div className="view-toggle">
                   <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`} onClick={() => setViewMode('grid')}><Grid size={16} /></button>
                   <button className={`view-btn ${viewMode === 'list' ? 'active' : ''}`} onClick={() => setViewMode('list')}><List size={16} /></button>
+                  <button className={`view-btn ${viewMode === 'masonry' ? 'active' : ''}`} onClick={() => setViewMode('masonry')}><LayoutGrid size={16} /></button>
                 </div>
               </div>
               <div className="settings-item">
@@ -986,7 +1222,7 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
                       key={color}
                       className={`accent-dot ${accentColor === color ? 'active' : ''}`}
                       style={{ background: color }}
-                      onClick={() => { setAccentColor(color); document.documentElement.style.setProperty('--primary', color); toast.success('Accent color updated'); }}
+                      onClick={() => { setAccentColor(color); localStorage.setItem('settings_accentColor', color); document.documentElement.style.setProperty('--primary', color); if (notifications) toast.success('Accent color updated'); }}
                     />
                   ))}
                 </div>
@@ -1001,7 +1237,7 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
                     <p className="settings-desc">Show toast notifications for actions</p>
                   </div>
                 </div>
-                <button className={`toggle-switch ${notifications ? 'active' : ''}`} onClick={() => { setNotifications(!notifications); toast.success(notifications ? 'Notifications off' : 'Notifications on'); }}>
+                <button className={`toggle-switch ${notifications ? 'active' : ''}`} onClick={() => { const next = !notifications; setNotifications(next); localStorage.setItem('settings_notifications', JSON.stringify(next)); toast.success(next ? 'Notifications on' : 'Notifications off'); }}>
                   <div className="toggle-knob" />
                 </button>
               </div>
@@ -1013,7 +1249,7 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
                     <p className="settings-desc">Ask for confirmation before deleting files</p>
                   </div>
                 </div>
-                <button className={`toggle-switch ${confirmDelete ? 'active' : ''}`} onClick={() => { setConfirmDelete(!confirmDelete); toast.success(confirmDelete ? 'Quick delete enabled' : 'Delete confirmation enabled'); }}>
+                <button className={`toggle-switch ${confirmDelete ? 'active' : ''}`} onClick={() => { const next = !confirmDelete; setConfirmDelete(next); localStorage.setItem('settings_confirmDelete', JSON.stringify(next)); toast.success(next ? 'Delete confirmation enabled' : 'Quick delete enabled'); }}>
                   <div className="toggle-knob" />
                 </button>
               </div>
@@ -1085,6 +1321,25 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
       <Header userInfo={userInfo} onLogout={() => { onLogout(); navigate('/'); }} darkMode={darkMode} themeMode={themeMode} setThemeMode={setThemeMode} searchQuery={searchQuery} onSearchChange={setSearchQuery} profilePicture={profilePic} onProfileClick={() => { setActiveTab('settings'); setSettingsSection('profile'); }} onSettingsClick={() => { setActiveTab('settings'); setSettingsSection('main'); }} />
       <main className="dashboard-main">{renderContent()}</main>
       <BottomDock activeTab={activeTab} onTabChange={handleTabChange} onUploadClick={() => openUpload('all')} />
+
+      {/* Floating Selection Bar */}
+      {selectedFiles.size > 0 && (
+        <div className="selection-bar animate-slide-up">
+          <span className="selection-count">{selectedFiles.size} selected</span>
+          <button className="selection-action" onClick={selectAll} title="Select all">
+            <CheckSquare size={16} /> All
+          </button>
+          <button className="selection-action" onClick={handleBulkDownload} title="Download as ZIP">
+            <Download size={16} /> ZIP
+          </button>
+          <button className="selection-action danger" onClick={handleBulkDelete} title="Delete selected">
+            <Trash2 size={16} /> Delete
+          </button>
+          <button className="selection-action ghost" onClick={clearSelection}>
+            <X size={16} /> Cancel
+          </button>
+        </div>
+      )}
       <UploadModal
         isOpen={showUploadModal}
         onClose={() => { setShowUploadModal(false); if (selectedFolder) { fetchAllMedia(); fetchFolders(); } }}
@@ -1097,8 +1352,27 @@ const ImageUploadPage = ({ token, userInfo, onLogout, darkMode, themeMode, setTh
         folderName={selectedFolder?.name || null}
       />
       {previewImage && (
-        <ImagePreviewModal image={previewImage} images={filteredMedia} onClose={() => setPreviewImage(null)} onDelete={handleMediaDelete} onNavigate={setPreviewImage} folders={folders} onMoveToFolder={handleMoveToFolder} onRemoveFromFolder={handleRemoveFromFolder} />
+        <ImagePreviewModal image={previewImage} images={filteredMedia} onClose={() => setPreviewImage(null)} onDelete={handleMediaDelete} onNavigate={setPreviewImage} folders={folders} onMoveToFolder={handleMoveToFolder} onRemoveFromFolder={handleRemoveFromFolder} token={token} onRefresh={fetchAllMedia} />
       )}
+      <OnboardingTour enabled={true} />
+
+      <ConfirmModal
+        isOpen={confirmDeleteAll}
+        title="Delete All Files"
+        message="Are you sure you want to delete ALL files? This action cannot be undone."
+        confirmText="Yes, delete everything"
+        onCancel={() => setConfirmDeleteAll(false)}
+        onConfirm={executeDeleteAll}
+      />
+
+      <ConfirmModal
+        isOpen={isBulkDeleteConfirmOpen}
+        title="Delete Selected Files"
+        message={`Are you sure you want to delete ${selectedFiles.size} selected files? This action cannot be undone.`}
+        confirmText="Delete Files"
+        onCancel={() => setIsBulkDeleteConfirmOpen(false)}
+        onConfirm={executeBulkDelete}
+      />
     </div>
   );
 };

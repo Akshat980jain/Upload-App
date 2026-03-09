@@ -11,6 +11,8 @@ const videoRoutes = require('./routes/videoRoutes');
 const documentRoutes = require('./routes/documentRoutes');
 const folderRoutes = require('./routes/folderRoutes');
 const chatbotRoutes = require('./routes/chatbotRoutes');
+const shareRoutes = require('./routes/shareRoutes');
+const { router: activityRoutes } = require('./routes/activityRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -60,6 +62,8 @@ app.use('/api/videos', videoRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/folders', folderRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/share', shareRoutes);
+app.use('/api/activity', activityRoutes);
 
 // Serve static assets (uploaded images, videos, and documents) from backend directories
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -109,9 +113,9 @@ const connectDB = async () => {
 
 // Serve React app in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../frontend-new/build')));
+  app.use(express.static(path.join(__dirname, '../frontend/build')));
   app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../frontend-new', 'build', 'index.html'));
+    res.sendFile(path.resolve(__dirname, '../frontend', 'build', 'index.html'));
   });
 } else {
   app.get('/', (req, res) => {

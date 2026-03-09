@@ -1,0 +1,143 @@
+/* ShareFolderModal.css */
+/* Reuses some base styles from ShareModal.css */
+
+.share-form {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+}
+
+.share-input-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.share-input-group input {
+    flex: 1;
+    min-width: 0;
+    /* allows input to shrink */
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+}
+
+.permission-select {
+    width: auto !important;
+    padding: 10px 12px !important;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    min-width: 90px;
+}
+
+.collaborators-list h4 {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin: 0 0 16px 0;
+    font-weight: 600;
+}
+
+.collaborator-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+}
+
+.collab-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.owner-avatar {
+    background: #e6f4ea;
+    color: #1e8e3e;
+}
+
+.dark .owner-avatar {
+    background: rgba(30, 142, 62, 0.2);
+    color: #81c995;
+}
+
+.collab-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.collab-name {
+    font-size: 0.95rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.collab-email {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.collaborator-item.owner .collab-role {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    background: none;
+    padding: 0;
+}
+
+.collab-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.collab-role.badge {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    text-transform: capitalize;
+}
+
+.remove-collab-btn {
+    background: none;
+    border: none;
+    padding: 6px;
+    border-radius: 6px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.remove-collab-btn:hover {
+    background: rgba(217, 48, 37, 0.1);
+    color: #d93025;
+}
+
+.empty-collaborators {
+    padding: 16px 0;
+    text-align: center;
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+    font-style: italic;
+}

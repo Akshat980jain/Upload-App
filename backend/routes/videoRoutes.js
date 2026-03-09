@@ -5,13 +5,15 @@ const Video = require('../models/Video');
 const { protect } = require('../middleware/authMiddleware');
 const archiver = require('archiver');
 const fs = require('fs');
+const ffmpeg = require('fluent-ffmpeg');
+const { logActivity } = require('./activityRoutes');
 
 const router = express.Router();
 
 // Multer storage for videos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, 'videos/');
+    cb(null, path.join(__dirname, '..', 'videos'));
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
@@ -53,7 +55,48 @@ router.post('/upload-multiple', protect, upload.array('videos', 10), async (req,
     }));
 
     const result = await Video.insertMany(videos);
+
+    // Log activity
+    for (const vid of videos) {
+      await logActivity(req.user.id, 'upload', vid.originalName, 'video');
+    }
+
     res.status(201).json(result);
+
+    // Generate thumbnails in background
+    setImmediate(async () => {
+      for (const video of result) {
+        try {
+          const thumbnailName = `thumb-${video.filename}.jpg`;
+          const thumbnailDir = path.join(__dirname, '..', 'uploads');
+          if (!fs.existsSync(thumbnailDir)) fs.mkdirSync(thumbnailDir, { recursive: true });
+
+          await new Promise((resolve, reject) => {
+            ffmpeg(path.join(__dirname, '..', video.path))
+              .on('end', resolve)
+              .on('error', reject)
+              .screenshots({
+                count: 1,
+                folder: thumbnailDir,
+                filename: thumbnailName,
+                size: '320x240',
+                timemarks: ['1']
+              });
+          });
+
+          // Also get duration
+          const duration = await new Promise((resolve) => {
+            ffmpeg.ffprobe(path.join(__dirname, '..', video.path), (err, metadata) => {
+              resolve(err ? 0 : metadata.format.duration);
+            });
+          });
+
+          await Video.findByIdAndUpdate(video._id, { thumbnail: thumbnailName, duration: duration || 0 });
+        } catch (err) {
+          console.error(`Thumbnail generation failed for ${video.filename}:`, err.message);
+        }
+      }
+    });
   } catch (error) {
     console.error('Video upload error:', error);
     res.status(500).json({ message: 'Server error during video upload', error: error.message });
@@ -65,7 +108,7 @@ router.post('/upload-multiple', protect, upload.array('videos', 10), async (req,
 // @access  Private
 router.get('/', protect, async (req, res) => {
   try {
-    const videos = await Video.find({ user: req.user.id }).sort({ uploadDate: -1 });
+    const videos = await Video.find({ user: req.user.id, isDeleted: { $ne: true } }).sort({ uploadDate: -1 });
     res.json(videos);
   } catch (error) {
     console.error('Error fetching videos:', error);
@@ -79,25 +122,56 @@ router.get('/', protect, async (req, res) => {
 router.delete('/:id', protect, async (req, res) => {
   try {
     const video = await Video.findById(req.params.id);
-    if (!video) {
-      return res.status(404).json({ message: 'Video not found' });
-    }
-    if (video.user.toString() !== req.user.id) {
-      return res.status(401).json({ message: 'Not authorized' });
-    }
+    if (!video) return res.status(404).json({ message: 'Video not found' });
+    if (video.user.toString() !== req.user.id) return res.status(401).json({ message: 'Not authorized' });
 
-    // Optional: remove file from server storage
-    // const fs = require('fs');
-    // fs.unlink(video.path, (err) => {
-    //   if (err) console.error('Error deleting video file:', err);
-    // });
+    video.isDeleted = true;
+    video.deletedAt = new Date();
+    video.folder = null;
+    await video.save();
 
-    await video.deleteOne();
-    res.json({ message: 'Video deleted successfully' });
+    // Log activity
+    await logActivity(req.user.id, 'delete', video.originalName, 'video');
+
+    res.json({ message: 'Video moved to trash' });
   } catch (error) {
     console.error('Error deleting video:', error);
     res.status(500).json({ message: 'Server error' });
   }
+});
+
+router.get('/trash', protect, async (req, res) => {
+  try {
+    const videos = await Video.find({ user: req.user.id, isDeleted: true }).sort({ deletedAt: -1 });
+    res.json(videos);
+  } catch (error) { res.status(500).json({ message: 'Error fetching trash' }); }
+});
+
+router.put('/:id/restore', protect, async (req, res) => {
+  try {
+    const video = await Video.findById(req.params.id);
+    if (!video || video.user.toString() !== req.user.id) return res.status(404).json({ message: 'Not found' });
+    video.isDeleted = false; video.deletedAt = null; await video.save();
+
+    // Log activity
+    await logActivity(req.user.id, 'restore', video.originalName, 'video');
+
+    res.json(video);
+  } catch (error) { res.status(500).json({ message: 'Error restoring' }); }
+});
+
+router.delete('/:id/permanent', protect, async (req, res) => {
+  try {
+    const video = await Video.findById(req.params.id);
+    if (!video || video.user.toString() !== req.user.id) return res.status(404).json({ message: 'Not found' });
+    if (fs.existsSync(video.path)) fs.unlinkSync(video.path);
+    await video.deleteOne();
+
+    // Log activity
+    await logActivity(req.user.id, 'delete', video.originalName || video.filename, 'video', { permanent: true });
+
+    res.json({ message: 'Permanently deleted' });
+  } catch (error) { res.status(500).json({ message: 'Error permanently deleting' }); }
 });
 
 // @desc    Download selected videos as zip

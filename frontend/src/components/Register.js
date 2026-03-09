@@ -4,7 +4,7 @@ import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './Login.css'; /* Shares Login card styles */
 
-const API_URL = process.env.REACT_APP_API_URL ?? 'https://gallayhub.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL ?? 'https://galleryhub.onrender.com';
 
 const Register = ({ onLogin }) => {
     const [name, setName] = useState('');
